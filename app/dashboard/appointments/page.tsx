@@ -25,12 +25,12 @@ function formatTime(t: string) {
 }
 
 const statusColors: Record<string, string> = {
-  scheduled: "bg-slate-100 text-slate-700",
-  confirmed: "bg-blue-100 text-blue-700",
-  "in-progress": "bg-amber-100 text-amber-700",
-  completed: "bg-emerald-100 text-emerald-700",
-  cancelled: "bg-red-100 text-red-700",
-  "no-show": "bg-slate-100 text-slate-600",
+  scheduled: "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200",
+  confirmed: "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300",
+  "in-progress": "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
+  completed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300",
+  cancelled: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300",
+  "no-show": "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300",
 };
 
 const typeLabels: Record<string, string> = {
@@ -162,8 +162,8 @@ export default function AppointmentsPage() {
     <div className="p-8">
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-black">Appointments</h1>
-          <p className="mt-1 text-gray-600">
+          <h1 className="text-2xl font-bold text-[var(--foreground)]">Appointments</h1>
+          <p className="mt-1 text-[var(--foreground)] opacity-70">
             View and manage appointments
           </p>
         </div>
@@ -171,7 +171,7 @@ export default function AppointmentsPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 shadow-soft focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 input-select"
+            className="rounded-xl border border-[var(--card-border)] bg-[var(--muted-bg)] px-4 py-2.5 text-sm text-[var(--foreground)] shadow-soft focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 input-select"
           >
             <option value="">All statuses</option>
             <option value="scheduled">Scheduled</option>
@@ -184,7 +184,7 @@ export default function AppointmentsPage() {
           <select
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 shadow-soft focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 input-select"
+            className="rounded-xl border border-[var(--card-border)] bg-[var(--muted-bg)] px-4 py-2.5 text-sm text-[var(--foreground)] shadow-soft focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 input-select"
           >
             <option value="">All dates</option>
             <option value="today">Today</option>
@@ -305,23 +305,23 @@ export default function AppointmentsPage() {
         </div>
       </Dialog>
 
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-soft">
+      <div className="overflow-hidden rounded-2xl border border-[var(--card-border)] bg-[var(--card)] shadow-soft">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="px-5 py-3 font-semibold text-black">Date & time</th>
-                <th className="px-5 py-3 font-semibold text-black">Patient</th>
-                <th className="px-5 py-3 font-semibold text-black">Type</th>
-                <th className="px-5 py-3 font-semibold text-black">Doctor</th>
-                <th className="px-5 py-3 font-semibold text-black">Status</th>
-                <th className="px-5 py-3 font-semibold text-black"></th>
+              <tr className="border-b border-[var(--card-border)] bg-[var(--muted-bg)]">
+                <th className="px-5 py-3 font-semibold text-[var(--foreground)]">Date & time</th>
+                <th className="px-5 py-3 font-semibold text-[var(--foreground)]">Patient</th>
+                <th className="px-5 py-3 font-semibold text-[var(--foreground)]">Type</th>
+                <th className="px-5 py-3 font-semibold text-[var(--foreground)]">Doctor</th>
+                <th className="px-5 py-3 font-semibold text-[var(--foreground)]">Status</th>
+                <th className="px-5 py-3 font-semibold text-[var(--foreground)]"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-[var(--card-border)]">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-gray-500">
+                  <td colSpan={6} className="px-5 py-12 text-center text-[var(--foreground)] opacity-70">
                     No appointments match the selected filters.
                   </td>
                 </tr>
@@ -329,26 +329,26 @@ export default function AppointmentsPage() {
                 filtered.map((apt) => (
                   <tr
                     key={apt.id}
-                    className="transition-colors hover:bg-gray-50"
+                    className="transition-colors hover:bg-[var(--sidebar-hover)]"
                   >
                     <td className="px-5 py-4">
-                      <p className="font-medium text-black">
+                      <p className="font-medium text-[var(--foreground)]">
                         {formatDate(apt.date)}
                       </p>
-                      <p className="text-gray-500">{formatTime(apt.time)}</p>
+                      <p className="text-[var(--foreground)] opacity-70">{formatTime(apt.time)}</p>
                     </td>
                     <td className="px-5 py-4">
                       <Link
                         href={`/dashboard/patients/${apt.patientId}`}
-                        className="font-medium text-black hover:text-blue-600"
+                        className="font-medium text-[var(--foreground)] hover:text-blue-600"
                       >
                         {apt.patientName}
                       </Link>
                     </td>
-                    <td className="px-5 py-4 text-gray-600">
+                    <td className="px-5 py-4 text-[var(--foreground)] opacity-80">
                       {typeLabels[apt.type] ?? apt.type}
                     </td>
-                    <td className="px-5 py-4 text-gray-600">
+                    <td className="px-5 py-4 text-[var(--foreground)] opacity-80">
                       {apt.doctor ?? "—"}
                     </td>
                     <td className="px-5 py-4">

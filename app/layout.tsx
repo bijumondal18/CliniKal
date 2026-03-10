@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Clinic Dashboard | Patients & Appointments",
+  title: "Clinikal Dashboard | Patients & Appointments",
   description: "Manage patients and appointments for your clinic",
 };
 

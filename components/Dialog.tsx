@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+
 type DialogProps = {
   open: boolean;
   onClose: () => void;
@@ -25,6 +27,17 @@ export function Dialog({
   cancelLabel = "Cancel",
   saveDisabled = false,
 }: DialogProps) {
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
   if (!open) return null;
 
   return (

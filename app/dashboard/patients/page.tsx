@@ -123,8 +123,8 @@ export default function PatientsPage() {
     <div className="p-8">
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-black">Patients</h1>
-          <p className="mt-1 text-gray-600">
+          <h1 className="text-2xl font-bold text-[var(--foreground)]">Patients</h1>
+          <p className="mt-1 text-[var(--foreground)] opacity-70">
             Manage patient records
           </p>
         </div>
@@ -134,7 +134,7 @@ export default function PatientsPage() {
             placeholder="Search patients..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 shadow-soft placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="rounded-xl border border-[var(--card-border)] bg-[var(--muted-bg)] px-4 py-2.5 text-sm text-[var(--foreground)] shadow-soft placeholder:opacity-60 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           />
           <button
             type="button"
@@ -257,23 +257,23 @@ export default function PatientsPage() {
         </div>
       </Dialog>
 
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-soft">
+      <div className="overflow-hidden rounded-2xl border border-[var(--card-border)] bg-[var(--card)] shadow-soft">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="px-5 py-3 font-semibold text-black">Patient</th>
-                <th className="px-5 py-3 font-semibold text-black">Contact</th>
-                <th className="px-5 py-3 font-semibold text-black">DOB</th>
-                <th className="px-5 py-3 font-semibold text-black">Last visit</th>
-                <th className="px-5 py-3 font-semibold text-black">Blood type</th>
-                <th className="px-5 py-3 font-semibold text-black"></th>
+              <tr className="border-b border-[var(--card-border)] bg-[var(--muted-bg)]">
+                <th className="px-5 py-3 font-semibold text-[var(--foreground)]">Patient</th>
+                <th className="px-5 py-3 font-semibold text-[var(--foreground)]">Contact</th>
+                <th className="px-5 py-3 font-semibold text-[var(--foreground)]">DOB</th>
+                <th className="px-5 py-3 font-semibold text-[var(--foreground)]">Last visit</th>
+                <th className="px-5 py-3 font-semibold text-[var(--foreground)]">Blood type</th>
+                <th className="px-5 py-3 font-semibold text-[var(--foreground)]"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-[var(--card-border)]">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-gray-500">
+                  <td colSpan={6} className="px-5 py-12 text-center text-[var(--foreground)] opacity-70">
                     No patients match your search.
                   </td>
                 </tr>
@@ -281,30 +281,30 @@ export default function PatientsPage() {
                 filtered.map((p) => (
                   <tr
                     key={p.id}
-                    className="transition-colors hover:bg-gray-50"
+                    className="transition-colors hover:bg-[var(--sidebar-hover)]"
                   >
                     <td className="px-5 py-4">
                       <Link
                         href={`/dashboard/patients/${p.id}`}
-                        className="font-medium text-black hover:text-blue-600"
+                        className="font-medium text-[var(--foreground)] hover:text-blue-600"
                       >
                         {p.firstName} {p.lastName}
                       </Link>
-                      <p className="text-xs capitalize text-gray-500">{p.gender}</p>
+                      <p className="text-xs capitalize text-[var(--foreground)] opacity-70">{p.gender}</p>
                     </td>
                     <td className="px-5 py-4">
-                      <p className="text-gray-900">{p.email}</p>
-                      <p className="text-gray-500">{p.phone}</p>
+                      <p className="text-[var(--foreground)]">{p.email}</p>
+                      <p className="text-[var(--foreground)] opacity-70">{p.phone}</p>
                     </td>
-                    <td className="px-5 py-4 text-gray-600">
+                    <td className="px-5 py-4 text-[var(--foreground)] opacity-80">
                       {formatDate(p.dateOfBirth)}
                     </td>
-                    <td className="px-5 py-4 text-gray-600">
+                    <td className="px-5 py-4 text-[var(--foreground)] opacity-80">
                       {p.lastVisit ? formatDate(p.lastVisit) : "—"}
                     </td>
                     <td className="px-5 py-4">
                       {p.bloodType ? (
-                        <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                        <span className="rounded bg-[var(--muted-bg)] px-2 py-0.5 text-xs font-medium text-[var(--foreground)]">
                           {p.bloodType}
                         </span>
                       ) : (
@@ -316,7 +316,7 @@ export default function PatientsPage() {
                         <button
                           type="button"
                           onClick={(e) => { e.preventDefault(); openEdit(p); }}
-                          className="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                          className="rounded p-1.5 text-[var(--foreground)] opacity-70 hover:bg-[var(--muted-bg)] hover:opacity-100"
                           title="Edit patient"
                           aria-label="Edit patient"
                         >

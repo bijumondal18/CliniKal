@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 const topNavItems = [
   { href: "/dashboard", label: "Dashboard" },
@@ -13,7 +14,25 @@ const topNavItems = [
   { href: "/dashboard/appointments", label: "Appointments" },
   { href: "/dashboard/reports", label: "Reports" },
   { href: "/dashboard/messages", label: "Messages" },
-  { href: "/dashboard/staff", label: "Staff" },
+  { href: "/dashboard/staff", label: "Staffs" },
+];
+
+type NotificationType = "appointment" | "message" | "support_ticket";
+
+type NotificationItem = {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body?: string;
+  time: string;
+  read: boolean;
+};
+
+const initialNotifications: NotificationItem[] = [
+  { id: "1", type: "appointment", title: "New appointment booked", body: "John Doe scheduled a visit for tomorrow at 10:00 AM.", time: "2 min ago", read: false },
+  { id: "2", type: "message", title: "New message from Dr. Smith", body: "Please review the lab results when you get a chance.", time: "15 min ago", read: false },
+  { id: "3", type: "support_ticket", title: "Support ticket raised", body: "Ticket #2847: Billing inquiry has been assigned to you.", time: "1 hour ago", read: true },
+  { id: "4", type: "appointment", title: "Appointment reminder", body: "Reminder: 3 appointments scheduled for today.", time: "2 hours ago", read: true },
 ];
 
 export function TopBar() {
@@ -22,22 +41,51 @@ export function TopBar() {
   const { user, logout } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const [notificationDialogOpen, setNotificationDialogOpen] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationItem[]>(initialNotifications);
   const profileRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const openNotificationDialog = () => {
+    setNotificationDialogOpen(true);
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
+  useEffect(() => {
+    if (notificationDialogOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [notificationDialogOpen]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
         setProfileOpen(false);
       }
+      if (notificationRef.current && notificationDialogOpen && !notificationRef.current.contains(e.target as Node)) {
+        setNotificationDialogOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [notificationDialogOpen]);
 
   const initials = user?.username ? user.username.slice(0, 2).toUpperCase() : "?";
 
-  const handleLogout = () => {
+  const handleLogoutClick = () => {
     setProfileOpen(false);
+    setLogoutConfirmOpen(true);
+  };
+
+  const handleLogoutConfirm = () => {
     logout();
     router.push("/login");
   };
@@ -51,7 +99,7 @@ export function TopBar() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
         </div>
-        <span className="text-lg font-semibold tracking-tight text-[var(--foreground)]">Clinic</span>
+        <span className="text-lg font-semibold tracking-tight text-[var(--foreground)]">Clinikal</span>
       </div>
 
       {/* Middle: Pill nav - no scroll, fits in one row */}
@@ -91,16 +139,83 @@ export function TopBar() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </button>
-        <button
-          type="button"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--muted-bg)] text-[var(--foreground)] opacity-80 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-          title="Notifications"
-          aria-label="Notifications"
-        >
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-          </svg>
-        </button>
+        <div className="relative" ref={notificationRef}>
+          <button
+            type="button"
+            onClick={() => (notificationDialogOpen ? setNotificationDialogOpen(false) : openNotificationDialog())}
+            className="relative flex h-9 w-9 items-center justify-center rounded-full bg-[var(--muted-bg)] text-[var(--foreground)] opacity-80 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            title="Notifications"
+            aria-label="Notifications"
+            aria-expanded={notificationDialogOpen}
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            {unreadCount > 0 && (
+              <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500 ring-2 ring-[var(--card)]" aria-hidden />
+            )}
+          </button>
+          {notificationDialogOpen && (
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="notifications-dialog-title"
+              className="absolute right-0 top-full z-50 mt-2 w-[min(24rem,calc(100vw-2rem))] rounded-2xl border border-[var(--card-border)] bg-[var(--card)] shadow-soft"
+            >
+              <div className="border-b border-[var(--card-border)] px-4 py-3">
+                <h2 id="notifications-dialog-title" className="text-base font-semibold text-[var(--foreground)]">
+                  Notifications
+                </h2>
+              </div>
+              <div className="max-h-[min(70vh,20rem)] overflow-y-auto overscroll-contain px-2 py-2">
+                {notifications.length === 0 ? (
+                  <p className="px-4 py-8 text-center text-sm text-[var(--foreground)] opacity-70">No notifications yet.</p>
+                ) : (
+                  <ul className="space-y-1">
+                    {notifications.map((n) => (
+                      <li
+                        key={n.id}
+                        className="flex gap-3 rounded-xl px-4 py-3 text-left transition-colors hover:bg-[var(--sidebar-hover)]"
+                      >
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--muted-bg)] text-[var(--foreground)]">
+                          {n.type === "appointment" && (
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          )}
+                          {n.type === "message" && (
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                          )}
+                          {n.type === "support_ticket" && (
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                          )}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-[var(--foreground)]">{n.title}</p>
+                          {n.body && <p className="mt-0.5 text-xs text-[var(--foreground)] opacity-70 line-clamp-2">{n.body}</p>}
+                          <p className="mt-1 text-xs text-[var(--foreground)] opacity-50">{n.time}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div className="border-t border-[var(--card-border)] px-4 py-2">
+                <button
+                  type="button"
+                  onClick={() => setNotificationDialogOpen(false)}
+                  className="w-full rounded-xl border border-[var(--card-border)] bg-[var(--card)] px-4 py-2 text-sm font-medium text-[var(--foreground)] shadow-soft hover:bg-[var(--sidebar-hover)] focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
         <div className="relative" ref={profileRef}>
           <button
             type="button"
@@ -131,7 +246,7 @@ export function TopBar() {
               </Link>
               <button
                 type="button"
-                onClick={handleLogout}
+                onClick={handleLogoutClick}
                 className="w-full px-4 py-2 text-left text-sm text-[var(--foreground)] hover:bg-[var(--sidebar-hover)]"
               >
                 Logout
@@ -140,6 +255,18 @@ export function TopBar() {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={logoutConfirmOpen}
+        onClose={() => setLogoutConfirmOpen(false)}
+        title="Logout"
+        message="Are you sure you want to logout?"
+        confirmLabel="Logout"
+        cancelLabel="Cancel"
+        onConfirm={handleLogoutConfirm}
+        variant="primary"
+      />
+
     </header>
   );
 }

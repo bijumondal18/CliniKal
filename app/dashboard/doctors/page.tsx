@@ -149,8 +149,8 @@ export default function DoctorsPage() {
     <div className="p-8">
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-black">Doctors</h1>
-          <p className="mt-1 text-gray-600">
+          <h1 className="text-2xl font-bold text-[var(--foreground)]">Doctors</h1>
+          <p className="mt-1 text-[var(--foreground)] opacity-70">
             All doctors and their details
           </p>
         </div>
@@ -158,7 +158,7 @@ export default function DoctorsPage() {
           <button
             type="button"
             onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-            className="rounded-xl border border-gray-200 bg-gray-50 p-2.5 text-gray-600 shadow-soft hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="rounded-xl border border-[var(--card-border)] bg-[var(--muted-bg)] p-2.5 text-[var(--foreground)] shadow-soft hover:bg-[var(--sidebar-hover)] hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 opacity-80"
             title={viewMode === "grid" ? "Switch to list view" : "Switch to grid view"}
             aria-label={viewMode === "grid" ? "Switch to list view" : "Switch to grid view"}
           >
@@ -177,7 +177,7 @@ export default function DoctorsPage() {
             placeholder="Search doctors..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 shadow-soft placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="rounded-xl border border-[var(--card-border)] bg-[var(--muted-bg)] px-4 py-2.5 text-sm text-[var(--foreground)] shadow-soft placeholder:opacity-60 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           />
           <button
             type="button"
@@ -315,56 +315,56 @@ export default function DoctorsPage() {
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.length === 0 ? (
-          <p className="col-span-full rounded-2xl border border-gray-200 bg-white py-12 text-center text-gray-500">
+          <p className="col-span-full rounded-2xl border border-[var(--card-border)] bg-[var(--card)] py-12 text-center text-[var(--foreground)] opacity-70">
             No doctors match your search.
           </p>
         ) : viewMode === "list" ? (
-          <div className="col-span-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-soft">
+          <div className="col-span-full overflow-hidden rounded-2xl border border-[var(--card-border)] bg-[var(--card)] shadow-soft">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="px-5 py-3 font-semibold text-black">Doctor</th>
-                    <th className="px-5 py-3 font-semibold text-black">Title</th>
-                    <th className="px-5 py-3 font-semibold text-black">Specializations</th>
-                    <th className="px-5 py-3 font-semibold text-black">Fee</th>
-                    <th className="px-5 py-3 font-semibold text-black">Contact</th>
-                    <th className="px-5 py-3 font-semibold text-black"></th>
+                  <tr className="border-b border-[var(--card-border)] bg-[var(--muted-bg)]">
+                    <th className="px-5 py-3 font-semibold text-[var(--foreground)]">Doctor</th>
+                    <th className="px-5 py-3 font-semibold text-[var(--foreground)]">Title</th>
+                    <th className="px-5 py-3 font-semibold text-[var(--foreground)]">Specializations</th>
+                    <th className="px-5 py-3 font-semibold text-[var(--foreground)]">Fee</th>
+                    <th className="px-5 py-3 font-semibold text-[var(--foreground)]">Contact</th>
+                    <th className="px-5 py-3 font-semibold text-[var(--foreground)]"></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-[var(--card-border)]">
                   {filtered.map((doc) => (
-                    <tr key={doc.id} className="transition-colors hover:bg-gray-50">
+                    <tr key={doc.id} className="transition-colors hover:bg-[var(--sidebar-hover)]">
                       <td className="px-5 py-4">
                         <Link href={`/dashboard/doctors/${doc.id}`} className="flex items-center gap-3">
                           {doc.profilePhoto ? (
                             <img src={doc.profilePhoto} alt="" className="h-10 w-10 rounded-full object-cover" />
                           ) : (
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--primary-muted)] text-blue-600 dark:text-blue-300">
                               <span className="text-sm font-semibold">{doc.firstName[0]}{doc.lastName[0]}</span>
                             </div>
                           )}
-                          <span className="font-medium text-black hover:text-blue-600">
+                          <span className="font-medium text-[var(--foreground)] hover:text-blue-600">
                             Dr. {doc.firstName} {doc.lastName}
                           </span>
                         </Link>
                       </td>
-                      <td className="px-5 py-4 text-gray-600">{doc.title} · {doc.qualification.split(",")[0]}</td>
+                      <td className="px-5 py-4 text-[var(--foreground)] opacity-80">{doc.title} · {doc.qualification.split(",")[0]}</td>
                       <td className="px-5 py-4">
                         <div className="flex flex-wrap gap-1.5">
                           {doc.specializations.slice(0, 2).map((s) => (
-                            <span key={s} className="rounded bg-blue-50 px-2 py-0.5 text-xs text-blue-700">{s}</span>
+                            <span key={s} className="rounded bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">{s}</span>
                           ))}
                         </div>
                       </td>
-                      <td className="px-5 py-4 font-medium text-black">${doc.consultationFee}</td>
-                      <td className="px-5 py-4 text-gray-600">{doc.phone}</td>
+                      <td className="px-5 py-4 font-medium text-[var(--foreground)]">${doc.consultationFee}</td>
+                      <td className="px-5 py-4 text-[var(--foreground)] opacity-80">{doc.phone}</td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
                             onClick={(e) => { e.preventDefault(); openEdit(doc); }}
-                            className="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                            className="rounded p-1.5 text-[var(--foreground)] opacity-70 hover:bg-[var(--muted-bg)] hover:opacity-100"
                             title="Edit doctor"
                             aria-label="Edit doctor"
                           >
@@ -387,14 +387,14 @@ export default function DoctorsPage() {
           filtered.map((doc) => (
             <div
               key={doc.id}
-              className="group relative rounded-2xl border border-gray-200 bg-white p-5 shadow-soft transition-shadow hover:shadow-soft"
+              className="group relative rounded-2xl border border-[var(--card-border)] bg-[var(--card)] p-5 shadow-soft transition-shadow hover:shadow-soft"
             >
               <Link href={`/dashboard/doctors/${doc.id}`} className="block">
               <div className="flex items-start justify-between gap-2">
                 {doc.profilePhoto ? (
                   <img src={doc.profilePhoto} alt="" className="h-12 w-12 shrink-0 rounded-full object-cover" />
                 ) : (
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--primary-muted)] text-blue-600 dark:text-blue-300">
                     <span className="text-lg font-semibold">
                       {doc.firstName[0]}
                       {doc.lastName[0]}
@@ -405,7 +405,7 @@ export default function DoctorsPage() {
                   <button
                     type="button"
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); openEdit(doc); }}
-                    className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                    className="rounded p-1.5 text-[var(--foreground)] opacity-60 hover:bg-[var(--muted-bg)] hover:opacity-100"
                     title="Edit doctor"
                     aria-label="Edit doctor"
                   >
@@ -413,29 +413,29 @@ export default function DoctorsPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                   </button>
-                  <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
+                  <span className="rounded-full bg-[var(--muted-bg)] px-2.5 py-0.5 text-xs font-medium text-[var(--foreground)]">
                     ${doc.consultationFee}
                   </span>
                 </div>
               </div>
-              <h2 className="mt-4 font-semibold text-black group-hover:text-blue-600">
+              <h2 className="mt-4 font-semibold text-[var(--foreground)] group-hover:text-blue-600">
                 Dr. {doc.firstName} {doc.lastName}
               </h2>
-              <p className="text-sm text-gray-500">{doc.title} · {doc.qualification.split(",")[0]}</p>
+              <p className="text-sm text-[var(--foreground)] opacity-70">{doc.title} · {doc.qualification.split(",")[0]}</p>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {doc.specializations.slice(0, 2).map((s) => (
                   <span
                     key={s}
-                    className="rounded bg-blue-50 px-2 py-0.5 text-xs text-blue-700"
+                    className="rounded bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/50 dark:text-blue-200"
                   >
                     {s}
                   </span>
                 ))}
               </div>
-              <p className="mt-3 text-xs text-gray-500">
+              <p className="mt-3 text-xs text-[var(--foreground)] opacity-70">
                 {doc.schedule.length > 0 ? formatSchedule(doc.schedule) : "Schedule not set"}
               </p>
-              <p className="mt-1 text-xs text-gray-500">{doc.phone}</p>
+              <p className="mt-1 text-xs text-[var(--foreground)] opacity-70">{doc.phone}</p>
               </Link>
             </div>
           ))

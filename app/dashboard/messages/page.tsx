@@ -58,8 +58,8 @@ export default function MessagesPage() {
     <div className="p-8">
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-black">Messages</h1>
-          <p className="mt-1 text-gray-600">
+          <h1 className="text-2xl font-bold text-[var(--foreground)]">Messages</h1>
+          <p className="mt-1 text-[var(--foreground)] opacity-70">
             Messages from doctors and patients
           </p>
         </div>
@@ -67,7 +67,7 @@ export default function MessagesPage() {
           <select
             value={senderFilter}
             onChange={(e) => setSenderFilter(e.target.value)}
-            className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 shadow-soft focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 input-select"
+            className="rounded-xl border border-[var(--card-border)] bg-[var(--muted-bg)] px-4 py-2.5 text-sm text-[var(--foreground)] shadow-soft focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 input-select"
           >
             <option value="">All senders</option>
             <option value="doctor">From doctors</option>
@@ -79,7 +79,7 @@ export default function MessagesPage() {
             placeholder="Search messages..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 shadow-soft placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="rounded-xl border border-[var(--card-border)] bg-[var(--muted-bg)] px-4 py-2.5 text-sm text-[var(--foreground)] shadow-soft placeholder:opacity-60 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           />
           <button
             type="button"
@@ -93,10 +93,10 @@ export default function MessagesPage() {
         </div>
       </header>
 
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-soft">
-        <div className="divide-y divide-gray-100">
+      <div className="overflow-hidden rounded-2xl border border-[var(--card-border)] bg-[var(--card)] shadow-soft">
+        <div className="divide-y divide-[var(--card-border)]">
           {filtered.length === 0 ? (
-            <div className="px-5 py-12 text-center text-gray-500">
+            <div className="px-5 py-12 text-center text-[var(--foreground)] opacity-70">
               No messages match your filters or search.
             </div>
           ) : (
@@ -106,20 +106,20 @@ export default function MessagesPage() {
               return (
                 <div
                   key={m.id}
-                  className={`flex flex-col gap-2 px-5 py-4 transition-colors hover:bg-gray-50 sm:flex-row sm:items-start sm:justify-between ${!m.read ? "bg-blue-50/50" : ""}`}
+                  className={`flex flex-col gap-2 px-5 py-4 transition-colors hover:bg-[var(--sidebar-hover)] sm:flex-row sm:items-start sm:justify-between ${!m.read ? "bg-blue-500/10 dark:bg-blue-500/20" : ""}`}
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span
-                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${senderBadge[m.senderType] ?? "bg-slate-100 text-slate-600"}`}
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${senderBadge[m.senderType] ?? "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300"}`}
                       >
                         {m.senderType}
                       </span>
-                      <span className="font-medium text-black">
+                      <span className="font-medium text-[var(--foreground)]">
                         {m.senderName}
                       </span>
-                      <span className="text-slate-400 dark:text-slate-500">→</span>
-                      <span className="text-gray-600">{m.recipientName}</span>
+                      <span className="text-[var(--foreground)] opacity-50">→</span>
+                      <span className="text-[var(--foreground)] opacity-80">{m.recipientName}</span>
                       {!m.read && (
                         <span className="rounded bg-blue-500 px-1.5 py-0.5 text-xs font-medium text-white">
                           New
@@ -127,24 +127,24 @@ export default function MessagesPage() {
                       )}
                     </div>
                     {m.subject && (
-                      <p className="mt-1 font-medium text-black">{m.subject}</p>
+                      <p className="mt-1 font-medium text-[var(--foreground)]">{m.subject}</p>
                     )}
-                    <p className="mt-0.5 line-clamp-2 text-sm text-gray-600">
+                    <p className="mt-0.5 line-clamp-2 text-sm text-[var(--foreground)] opacity-80">
                       {m.body}
                     </p>
                     {m.relatedPatientId && patientName && (
-                      <p className="mt-1 text-xs text-gray-500">
+                      <p className="mt-1 text-xs text-[var(--foreground)] opacity-70">
                         Patient:{" "}
                         <Link
                           href={`/dashboard/patients/${m.relatedPatientId}`}
-                          className="text-blue-600 hover:text-blue-700 dark:text-slate-400"
+                          className="text-blue-600 hover:text-blue-700"
                         >
                           {patientName}
                         </Link>
                       </p>
                     )}
                   </div>
-                  <div className="shrink-0 text-right text-xs text-gray-500">
+                  <div className="shrink-0 text-right text-xs text-[var(--foreground)] opacity-70">
                     {formatDateTime(m.sentAt)}
                   </div>
                 </div>

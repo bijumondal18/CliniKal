@@ -52,8 +52,8 @@ export default function ReportsPage() {
     <div className="p-8">
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-black">Reports</h1>
-          <p className="mt-1 text-gray-600">
+          <h1 className="text-2xl font-bold text-[var(--foreground)]">Reports</h1>
+          <p className="mt-1 text-[var(--foreground)] opacity-70">
             All reports by patient
           </p>
         </div>
@@ -61,7 +61,7 @@ export default function ReportsPage() {
           <select
             value={patientFilter}
             onChange={(e) => setPatientFilter(e.target.value)}
-            className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 shadow-soft focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 input-select"
+            className="rounded-xl border border-[var(--card-border)] bg-[var(--muted-bg)] px-4 py-2.5 text-sm text-[var(--foreground)] shadow-soft focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 input-select"
           >
             <option value="">All patients</option>
             {patients.map((p) => (
@@ -73,7 +73,7 @@ export default function ReportsPage() {
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 shadow-soft focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 input-select"
+            className="rounded-xl border border-[var(--card-border)] bg-[var(--muted-bg)] px-4 py-2.5 text-sm text-[var(--foreground)] shadow-soft focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 input-select"
           >
             <option value="">All types</option>
             <option value="lab">Lab</option>
@@ -86,29 +86,29 @@ export default function ReportsPage() {
             placeholder="Search reports..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 shadow-soft placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="rounded-xl border border-[var(--card-border)] bg-[var(--muted-bg)] px-4 py-2.5 text-sm text-[var(--foreground)] shadow-soft placeholder:opacity-60 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           />
         </div>
       </header>
 
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-soft">
+      <div className="overflow-hidden rounded-2xl border border-[var(--card-border)] bg-[var(--card)] shadow-soft">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="px-5 py-3 font-semibold text-black">Report</th>
-                <th className="px-5 py-3 font-semibold text-black">Patient</th>
-                <th className="px-5 py-3 font-semibold text-black">Doctor</th>
-                <th className="px-5 py-3 font-semibold text-black">Type</th>
-                <th className="px-5 py-3 font-semibold text-black">Date</th>
-                <th className="px-5 py-3 font-semibold text-black">Status</th>
-                <th className="px-5 py-3 font-semibold text-black"></th>
+              <tr className="border-b border-[var(--card-border)] bg-[var(--muted-bg)]">
+                <th className="px-5 py-3 font-semibold text-[var(--foreground)]">Report</th>
+                <th className="px-5 py-3 font-semibold text-[var(--foreground)]">Patient</th>
+                <th className="px-5 py-3 font-semibold text-[var(--foreground)]">Doctor</th>
+                <th className="px-5 py-3 font-semibold text-[var(--foreground)]">Type</th>
+                <th className="px-5 py-3 font-semibold text-[var(--foreground)]">Date</th>
+                <th className="px-5 py-3 font-semibold text-[var(--foreground)]">Status</th>
+                <th className="px-5 py-3 font-semibold text-[var(--foreground)]"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-[var(--card-border)]">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-12 text-center text-gray-500">
+                  <td colSpan={7} className="px-5 py-12 text-center text-[var(--foreground)] opacity-70">
                     No reports match your filters or search.
                   </td>
                 </tr>
@@ -116,12 +116,12 @@ export default function ReportsPage() {
                 filtered.map((r) => (
                 <tr
                   key={r.id}
-                  className="transition-colors hover:bg-gray-50"
+                  className="transition-colors hover:bg-[var(--sidebar-hover)]"
                 >
                   <td className="px-5 py-4">
-                    <p className="font-medium text-black">{r.title}</p>
+                    <p className="font-medium text-[var(--foreground)]">{r.title}</p>
                     {r.summary && (
-                      <p className="mt-0.5 line-clamp-1 text-xs text-gray-500">
+                      <p className="mt-0.5 line-clamp-1 text-xs text-[var(--foreground)] opacity-70">
                           {r.summary}
                         </p>
                       )}
@@ -129,21 +129,21 @@ export default function ReportsPage() {
                     <td className="px-5 py-4">
                       <Link
                         href={`/dashboard/patients/${r.patientId}`}
-                        className="font-medium text-black hover:text-blue-600"
+                        className="font-medium text-[var(--foreground)] hover:text-blue-600"
                       >
                         {r.patientName}
                       </Link>
                     </td>
-                    <td className="px-5 py-4 text-gray-600">{r.doctorName}</td>
+                    <td className="px-5 py-4 text-[var(--foreground)] opacity-80">{r.doctorName}</td>
                     <td className="px-5 py-4">
-                      <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                      <span className="rounded bg-[var(--muted-bg)] px-2 py-0.5 text-xs font-medium text-[var(--foreground)]">
                         {typeLabels[r.type] ?? r.type}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-gray-600">{formatDate(r.date)}</td>
+                    <td className="px-5 py-4 text-[var(--foreground)] opacity-80">{formatDate(r.date)}</td>
                     <td className="px-5 py-4">
                       <span
-                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${statusColors[r.status] ?? "bg-slate-100 text-slate-600"}`}
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${statusColors[r.status] ?? "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300"}`}
                       >
                         {r.status}
                       </span>

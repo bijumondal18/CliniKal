@@ -115,15 +115,15 @@ export default function StaffPage() {
     <div className="p-8">
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--foreground)]">Staff</h1>
+          <h1 className="text-2xl font-bold text-[var(--foreground)]">Staffs</h1>
           <p className="mt-1 text-[var(--foreground)] opacity-70">
-            Clinic staff list
+            Manage staffs
           </p>
         </div>
         <div className="flex gap-3">
           <input
             type="search"
-            placeholder="Search staff..."
+            placeholder="Search staffs..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="rounded-xl border border-[var(--card-border)] bg-[var(--muted-bg)] px-4 py-2.5 text-sm text-[var(--foreground)] shadow-soft placeholder:opacity-60 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
@@ -135,7 +135,7 @@ export default function StaffPage() {
           >
             <span className="flex items-center gap-2">
               <PlusIcon className="h-4 w-4" />
-              Add staff
+              Add staff member
             </span>
           </button>
         </div>
@@ -144,7 +144,7 @@ export default function StaffPage() {
       <Dialog
         open={dialogOpen}
         onClose={() => { setDialogOpen(false); resetForm(); }}
-        title={editingId ? "Edit staff" : "Add new staff"}
+        title={editingId ? "Edit staff member" : "Add new staff member"}
         onSave={handleSave}
         saveLabel="Save"
         cancelLabel="Cancel"
@@ -263,7 +263,7 @@ export default function StaffPage() {
               {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-5 py-12 text-center text-[var(--foreground)] opacity-70">
-                    No staff match your search. Add staff to get started.
+                    No staffs match your search. Add staff member to get started.
                   </td>
                 </tr>
               ) : (
@@ -291,8 +291,8 @@ export default function StaffPage() {
                           type="button"
                           onClick={() => openEdit(s)}
                           className="rounded p-1.5 text-[var(--foreground)] opacity-60 hover:bg-[var(--muted-bg)] hover:opacity-100"
-                          title="Edit staff"
-                          aria-label="Edit staff"
+                          title="Edit staff member"
+                          aria-label="Edit staff member"
                         >
                           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />

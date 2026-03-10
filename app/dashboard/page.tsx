@@ -20,16 +20,16 @@ function StatCard({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-soft">
+    <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--card)] p-5 shadow-soft">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-500">{title}</p>
-          <p className="mt-1 text-2xl font-bold text-black">{value}</p>
+          <p className="text-sm font-medium text-[var(--foreground)] opacity-70">{title}</p>
+          <p className="mt-1 text-2xl font-bold text-[var(--foreground)]">{value}</p>
           {subtitle && (
-            <p className="mt-0.5 text-xs text-gray-600">{subtitle}</p>
+            <p className="mt-0.5 text-xs text-[var(--foreground)] opacity-70">{subtitle}</p>
           )}
         </div>
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--primary-muted)] text-blue-600 dark:text-blue-300">
           {icon}
         </div>
       </div>
@@ -63,8 +63,8 @@ export default function DashboardPage() {
   return (
     <div className="p-8">
       <header className="mb-8">
-        <h1 className="text-2xl font-bold text-black">Overview</h1>
-        <p className="mt-1 text-gray-600">
+        <h1 className="text-2xl font-bold text-[var(--foreground)]">Overview</h1>
+        <p className="mt-1 text-[var(--foreground)] opacity-70">
           Your clinic at a glance
         </p>
       </header>
@@ -113,27 +113,27 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-2">
-        <section className="rounded-2xl border border-gray-200 bg-white shadow-soft">
-          <div className="border-b border-gray-200 px-5 py-4">
-            <h2 className="font-semibold text-black">Today&apos;s schedule</h2>
-            <p className="text-sm text-gray-600">March 10, 2025</p>
+        <section className="rounded-2xl border border-[var(--card-border)] bg-[var(--card)] shadow-soft">
+          <div className="border-b border-[var(--card-border)] px-5 py-4">
+            <h2 className="font-semibold text-[var(--foreground)]">Today&apos;s schedule</h2>
+            <p className="text-sm text-[var(--foreground)] opacity-70">March 10, 2025</p>
           </div>
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-[var(--card-border)]">
             {todayAppointments.length === 0 ? (
-              <li className="px-5 py-8 text-center text-sm text-gray-500">
+              <li className="px-5 py-8 text-center text-sm text-[var(--foreground)] opacity-70">
                 No appointments today
               </li>
             ) : (
               todayAppointments.map((apt) => (
                 <li key={apt.id} className="flex items-center justify-between gap-4 px-5 py-4">
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium text-black">{apt.patientName}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="font-medium text-[var(--foreground)]">{apt.patientName}</p>
+                    <p className="text-sm text-[var(--foreground)] opacity-70">
                       {apt.type.replace("-", " ")} · {apt.doctor}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-3">
-                    <span className="text-sm font-medium text-gray-700">
+                    <span className="text-sm font-medium text-[var(--foreground)] opacity-90">
                       {formatTime(apt.time)}
                     </span>
                     <span
@@ -148,17 +148,17 @@ export default function DashboardPage() {
           </ul>
         </section>
 
-        <section className="rounded-2xl border border-gray-200 bg-white shadow-soft">
-          <div className="border-b border-gray-200 px-5 py-4">
-            <h2 className="font-semibold text-black">Upcoming appointments</h2>
-            <p className="text-sm text-gray-600">Next 5</p>
+        <section className="rounded-2xl border border-[var(--card-border)] bg-[var(--card)] shadow-soft">
+          <div className="border-b border-[var(--card-border)] px-5 py-4">
+            <h2 className="font-semibold text-[var(--foreground)]">Upcoming appointments</h2>
+            <p className="text-sm text-[var(--foreground)] opacity-70">Next 5</p>
           </div>
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-[var(--card-border)]">
             {upcomingAppointments.map((apt) => (
               <li key={apt.id} className="flex items-center justify-between gap-4 px-5 py-4">
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-black">{apt.patientName}</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="font-medium text-[var(--foreground)]">{apt.patientName}</p>
+                  <p className="text-sm text-[var(--foreground)] opacity-70">
                     {apt.date} at {formatTime(apt.time)}
                   </p>
                 </div>

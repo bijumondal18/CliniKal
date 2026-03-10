@@ -1,0 +1,177 @@
+"use client";
+
+import { useMemo } from "react";
+import { useClinicData } from "@/contexts/ClinicDataContext";
+
+function getTodayString() {
+  const d = new Date();
+  return d.toISOString().slice(0, 10);
+}
+
+function StatCard({
+  title,
+  value,
+  subtitle,
+  icon,
+}: {
+  title: string;
+  value: string | number;
+  subtitle?: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-soft">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-500">{title}</p>
+          <p className="mt-1 text-2xl font-bold text-black">{value}</p>
+          {subtitle && (
+            <p className="mt-0.5 text-xs text-gray-600">{subtitle}</p>
+          )}
+        </div>
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+          {icon}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function formatTime(t: string) {
+  const [h, m] = t.split(":");
+  const hour = parseInt(h, 10);
+  const am = hour < 12;
+  const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+  return `${h12}:${m} ${am ? "AM" : "PM"}`;
+}
+
+const statusColors: Record<string, string> = {
+  scheduled: "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200",
+  confirmed: "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300",
+  "in-progress": "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
+  completed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300",
+  cancelled: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300",
+  "no-show": "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300",
+};
+
+export default function DashboardPage() {
+  const { appointments, patients } = useClinicData();
+  const today = getTodayString();
+  const todayAppointments = useMemo(() => appointments.filter((a) => a.date === today), [appointments, today]);
+  const upcomingAppointments = useMemo(() => appointments.filter((a) => a.date >= today).slice(0, 5), [appointments, today]);
+
+  return (
+    <div className="p-8">
+      <header className="mb-8">
+        <h1 className="text-2xl font-bold text-black">Overview</h1>
+        <p className="mt-1 text-gray-600">
+          Your clinic at a glance
+        </p>
+      </header>
+
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          title="Today's appointments"
+          value={todayAppointments.length}
+          subtitle={today}
+          icon={
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          }
+        />
+        <StatCard
+          title="Total patients"
+          value={patients.length}
+          subtitle="Registered"
+          icon={
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          }
+        />
+        <StatCard
+          title="Scheduled"
+          value={appointments.filter((a) => a.status === "scheduled" || a.status === "confirmed").length}
+          subtitle="Upcoming"
+          icon={
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+          }
+        />
+        <StatCard
+          title="Completed today"
+          value={appointments.filter((a) => a.date === today && a.status === "completed").length}
+          subtitle="So far"
+          icon={
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
+        />
+      </div>
+
+      <div className="mt-8 grid gap-8 lg:grid-cols-2">
+        <section className="rounded-2xl border border-gray-200 bg-white shadow-soft">
+          <div className="border-b border-gray-200 px-5 py-4">
+            <h2 className="font-semibold text-black">Today&apos;s schedule</h2>
+            <p className="text-sm text-gray-600">March 10, 2025</p>
+          </div>
+          <ul className="divide-y divide-gray-100">
+            {todayAppointments.length === 0 ? (
+              <li className="px-5 py-8 text-center text-sm text-gray-500">
+                No appointments today
+              </li>
+            ) : (
+              todayAppointments.map((apt) => (
+                <li key={apt.id} className="flex items-center justify-between gap-4 px-5 py-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-black">{apt.patientName}</p>
+                    <p className="text-sm text-gray-500">
+                      {apt.type.replace("-", " ")} · {apt.doctor}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-3">
+                    <span className="text-sm font-medium text-gray-700">
+                      {formatTime(apt.time)}
+                    </span>
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${statusColors[apt.status] ?? "bg-slate-100 text-slate-600"}`}
+                    >
+                      {apt.status.replace("-", " ")}
+                    </span>
+                  </div>
+                </li>
+              ))
+            )}
+          </ul>
+        </section>
+
+        <section className="rounded-2xl border border-gray-200 bg-white shadow-soft">
+          <div className="border-b border-gray-200 px-5 py-4">
+            <h2 className="font-semibold text-black">Upcoming appointments</h2>
+            <p className="text-sm text-gray-600">Next 5</p>
+          </div>
+          <ul className="divide-y divide-gray-100">
+            {upcomingAppointments.map((apt) => (
+              <li key={apt.id} className="flex items-center justify-between gap-4 px-5 py-4">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-black">{apt.patientName}</p>
+                  <p className="text-sm text-gray-500">
+                    {apt.date} at {formatTime(apt.time)}
+                  </p>
+                </div>
+                <span
+                  className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${statusColors[apt.status] ?? "bg-slate-100 text-slate-600"}`}
+                >
+                  {apt.status.replace("-", " ")}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+    </div>
+  );
+}

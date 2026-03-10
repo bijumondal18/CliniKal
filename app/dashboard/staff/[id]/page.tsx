@@ -43,9 +43,9 @@ export default function StaffDetailPage() {
     setEditOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!staff || !form.firstName.trim() || !form.lastName.trim() || !form.email.trim() || !form.phone.trim()) return;
-    updateStaff(staff.id, {
+    await updateStaff(staff.id, {
       firstName: form.firstName.trim(),
       lastName: form.lastName.trim(),
       role: form.role.trim(),
@@ -57,8 +57,8 @@ export default function StaffDetailPage() {
     setEditOpen(false);
   };
 
-  const handleDelete = () => {
-    removeStaff(id);
+  const handleDelete = async () => {
+    await removeStaff(id);
     router.push("/dashboard/staff");
   };
 

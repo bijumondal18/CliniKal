@@ -78,15 +78,15 @@ export function TopBar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [notificationDialogOpen]);
 
-  const initials = user?.username ? user.username.slice(0, 2).toUpperCase() : "?";
+  const initials = user?.email ? user.email.slice(0, 2).toUpperCase() : (user?.displayName?.slice(0, 2).toUpperCase() ?? "?");
 
   const handleLogoutClick = () => {
     setProfileOpen(false);
     setLogoutConfirmOpen(true);
   };
 
-  const handleLogoutConfirm = () => {
-    logout();
+  const handleLogoutConfirm = async () => {
+    await logout();
     router.push("/login");
   };
 
@@ -234,7 +234,7 @@ export function TopBar() {
           {profileOpen && (
             <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-[var(--card-border)] bg-[var(--card)] py-1 shadow-soft">
               <div className="border-b border-[var(--card-border)] px-4 py-2">
-                <p className="text-sm font-medium text-[var(--foreground)]">{user?.username ?? "User"}</p>
+                <p className="text-sm font-medium text-[var(--foreground)]">{user?.email ?? user?.displayName ?? "User"}</p>
                 <p className="text-xs text-[var(--foreground)] opacity-70">Logged in</p>
               </div>
               <Link

@@ -65,10 +65,10 @@ export default function DoctorDetailPage() {
     setEditOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim() || !form.phone.trim() || !doctor) return;
     const fee = parseInt(form.consultationFee, 10);
-    updateDoctor(doctor.id, {
+    await updateDoctor(doctor.id, {
       firstName: form.firstName.trim(),
       lastName: form.lastName.trim(),
       title: form.title.trim() || "MD",
@@ -84,8 +84,8 @@ export default function DoctorDetailPage() {
     setEditOpen(false);
   };
 
-  const handleDelete = () => {
-    removeDoctor(id);
+  const handleDelete = async () => {
+    await removeDoctor(id);
     router.push("/dashboard/doctors");
   };
 

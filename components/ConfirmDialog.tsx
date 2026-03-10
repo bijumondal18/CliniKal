@@ -7,7 +7,7 @@ type ConfirmDialogProps = {
   message: React.ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   variant?: "danger" | "primary";
 };
 
@@ -23,8 +23,8 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   if (!open) return null;
 
-  const handleConfirm = () => {
-    onConfirm();
+  const handleConfirm = async () => {
+    await onConfirm();
     onClose();
   };
 

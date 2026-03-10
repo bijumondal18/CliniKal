@@ -132,7 +132,7 @@ export default function AppointmentsPage() {
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.patientId || !form.date || !form.time || !form.doctorId) return;
     const patient = patients.find((p) => p.id === form.patientId);
     const doctor = doctors.find((d) => d.id === form.doctorId);
@@ -148,14 +148,18 @@ export default function AppointmentsPage() {
       doctorId: doctor.id,
       notes: form.notes.trim() || undefined,
     };
-    if (editingId) {
-      updateAppointment(editingId, payload);
-    } else {
-      const id = `a-${Date.now()}`;
-      addAppointment({ id, ...payload });
+    try {
+      if (editingId) {
+        await updateAppointment(editingId, payload);
+      } else {
+        const id = `a-${Date.now()}`;
+        await addAppointment({ id, ...payload });
+      }
+      setDialogOpen(false);
+      resetForm();
+    } catch (_e) {
+      // Error already surfaced by context or Firestore
     }
-    setDialogOpen(false);
-    resetForm();
   };
 
   return (

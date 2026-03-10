@@ -114,7 +114,7 @@ export default function DoctorsPage() {
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim() || !form.phone.trim()) {
       return;
     }
@@ -135,14 +135,18 @@ export default function DoctorsPage() {
       bio: form.bio.trim() || undefined,
       profilePhoto: form.profilePhoto.trim() || undefined,
     };
-    if (editingId) {
-      updateDoctor(editingId, payload);
-    } else {
-      const id = `d-${Date.now()}`;
-      addDoctor({ id, ...payload });
+    try {
+      if (editingId) {
+        await updateDoctor(editingId, payload);
+      } else {
+        const id = `d-${Date.now()}`;
+        await addDoctor({ id, ...payload });
+      }
+      setDialogOpen(false);
+      resetForm();
+    } catch (_e) {
+      // Error already surfaced by context or Firestore
     }
-    setDialogOpen(false);
-    resetForm();
   };
 
   return (

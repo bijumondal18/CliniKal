@@ -1,5 +1,45 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Firebase Setup
+
+This app uses **Firebase Authentication** (email/password) for login and **Cloud Firestore** for all clinic data (patients, doctors, appointments, staff).
+
+### 1. Create a Firebase project
+
+1. Go to [Firebase Console](https://console.firebase.google.com/) and create a project (or use an existing one).
+2. Enable **Authentication** → Sign-in method → **Email/Password**.
+3. Create at least one user (e.g. `admin@yourdomain.com` / your password) under Authentication → Users.
+4. Enable **Firestore Database** → Create database (start in test mode if you prefer; then deploy the rules below).
+
+### 2. Environment variables
+
+Copy `env.example` to `.env.local` and fill in your Firebase config from **Project settings** → **General** → **Your apps** (add a web app if needed):
+
+```
+NEXT_PUBLIC_FIREBASE_API_KEY=...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
+NEXT_PUBLIC_FIREBASE_APP_ID=...
+```
+
+### 3. Firestore rules
+
+Deploy the rules in `firestore.rules` so each user can only read/write their own data (documents are scoped by `userId`). In Firebase Console → Firestore → Rules, paste the contents of `firestore.rules`, or use the Firebase CLI:
+
+```bash
+firebase deploy --only firestore:rules
+```
+
+(Configure the Firebase CLI with `firebase use` if you have multiple projects.)
+
+### 4. Run the app
+
+After setting `.env.local`, run the dev server and sign in with the email/password you created in step 1.
+
+---
+
 ## Getting Started
 
 First, run the development server:

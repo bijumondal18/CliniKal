@@ -90,7 +90,7 @@ export default function PatientsPage() {
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim() || !form.phone.trim() || !form.dateOfBirth.trim()) {
       return;
     }
@@ -105,18 +105,22 @@ export default function PatientsPage() {
       address: form.address.trim() || undefined,
       notes: form.notes.trim() || undefined,
     };
-    if (editingId) {
-      const existing = patientList.find((x) => x.id === editingId);
-      if (existing) {
-        const { id: _x, ...rest } = existing;
-        updatePatient(editingId, { ...rest, ...payload });
+    try {
+      if (editingId) {
+        const existing = patientList.find((x) => x.id === editingId);
+        if (existing) {
+          const { id: _x, ...rest } = existing;
+          await updatePatient(editingId, { ...rest, ...payload });
+        }
+      } else {
+        const id = `p-${Date.now()}`;
+        await addPatient({ id, ...payload });
       }
-    } else {
-      const id = `p-${Date.now()}`;
-      addPatient({ id, ...payload });
+      setDialogOpen(false);
+      resetForm();
+    } catch (_e) {
+      // Error already surfaced by context or Firestore
     }
-    setDialogOpen(false);
-    resetForm();
   };
 
   return (

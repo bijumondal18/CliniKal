@@ -84,7 +84,7 @@ export default function StaffPage() {
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim() || !form.phone.trim()) return;
     const payload: Omit<Staff, "id"> = {
       firstName: form.firstName.trim(),
@@ -95,18 +95,22 @@ export default function StaffPage() {
       department: form.department.trim() || undefined,
       notes: form.notes.trim() || undefined,
     };
-    if (editingId) {
-      updateStaff(editingId, payload);
-    } else {
-      addStaff({ id: `s-${Date.now()}`, ...payload });
+    try {
+      if (editingId) {
+        await updateStaff(editingId, payload);
+      } else {
+        await addStaff({ id: `s-${Date.now()}`, ...payload });
+      }
+      setDialogOpen(false);
+      resetForm();
+    } catch (_e) {
+      // Error already surfaced by context or Firestore
     }
-    setDialogOpen(false);
-    resetForm();
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deleteTarget) {
-      removeStaff(deleteTarget.id);
+      await removeStaff(deleteTarget.id);
       setDeleteTarget(null);
     }
   };

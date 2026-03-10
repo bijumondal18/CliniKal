@@ -73,11 +73,11 @@ export default function PatientDetailPage() {
     setEditOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!patient || !form.firstName.trim() || !form.lastName.trim() || !form.email.trim() || !form.phone.trim() || !form.dateOfBirth.trim()) return;
     const existing = patient;
     const { id: _x, ...rest } = existing;
-    updatePatient(patient.id, {
+    await updatePatient(patient.id, {
       ...rest,
       firstName: form.firstName.trim(),
       lastName: form.lastName.trim(),
@@ -92,8 +92,8 @@ export default function PatientDetailPage() {
     setEditOpen(false);
   };
 
-  const handleDelete = () => {
-    removePatient(id);
+  const handleDelete = async () => {
+    await removePatient(id);
     router.push("/dashboard/patients");
   };
 

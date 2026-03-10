@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useClinicData } from "@/contexts/ClinicDataContext";
+import { getNextClinicId, CLINIC_ID_PREFIX } from "@/lib/clinic-ids";
 import { Dialog, dialogInputClass, dialogLabelClass } from "@/components/Dialog";
 import { PlusIcon } from "@/components/icons/PlusIcon";
 import type { Appointment } from "@/types/appointment";
@@ -73,6 +74,7 @@ export default function AppointmentsPage() {
   const [dateFilter, setDateFilter] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [form, setForm] = useState({
     patientId: "",
     date: "",
@@ -148,17 +150,21 @@ export default function AppointmentsPage() {
       doctorId: doctor.id,
       notes: form.notes.trim() || undefined,
     };
+    setFormError(null);
     try {
       if (editingId) {
         await updateAppointment(editingId, payload);
       } else {
-        const id = `a-${Date.now()}`;
+        const id = getNextClinicId(CLINIC_ID_PREFIX.APPOINTMENT, appointmentList.map((a) => a.id));
         await addAppointment({ id, ...payload });
       }
+      setFormError(null);
       setDialogOpen(false);
       resetForm();
-    } catch (_e) {
-      // Error already surfaced by context or Firestore
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Failed to save appointment. Please try again.";
+      if (process.env.NODE_ENV === "development") console.error("[Appointments] Firestore save error:", e);
+      setFormError(message);
     }
   };
 
@@ -209,7 +215,7 @@ export default function AppointmentsPage() {
 
       <Dialog
         open={dialogOpen}
-        onClose={() => { setDialogOpen(false); resetForm(); }}
+        onClose={() => { setDialogOpen(false); resetForm(); setFormError(null); }}
         title={editingId ? "Edit appointment" : "Add new appointment"}
         onSave={handleSave}
         saveLabel="Save"
@@ -217,6 +223,11 @@ export default function AppointmentsPage() {
         saveDisabled={!appointmentFormValid}
       >
         <div className="space-y-4">
+          {formError && (
+            <p className="rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300">
+              {formError}
+            </p>
+          )}
           <div>
             <label className={dialogLabelClass}>Patient *</label>
             <select

@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 type DialogProps = {
   open: boolean;
   onClose: () => void;
   title: string;
   children: React.ReactNode;
-  onSave?: () => void;
+  onSave?: () => void | Promise<void>;
   saveLabel?: string;
   cancelLabel?: string;
   saveDisabled?: boolean;
@@ -27,6 +27,8 @@ export function Dialog({
   cancelLabel = "Cancel",
   saveDisabled = false,
 }: DialogProps) {
+  const [saving, setSaving] = useState(false);
+
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -39,6 +41,17 @@ export function Dialog({
   }, [open]);
 
   if (!open) return null;
+
+  const handleSaveClick = async () => {
+    if (!onSave) return;
+    setSaving(true);
+    try {
+      const result = onSave();
+      if (result instanceof Promise) await result;
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -72,11 +85,11 @@ export function Dialog({
           {onSave && (
             <button
               type="button"
-              onClick={onSave}
-              disabled={saveDisabled}
+              onClick={handleSaveClick}
+              disabled={saveDisabled || saving}
               className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-soft hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {saveLabel}
+              {saving ? "Saving..." : saveLabel}
             </button>
           )}
         </div>

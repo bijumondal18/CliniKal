@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useClinicData } from "@/contexts/ClinicDataContext";
+import { getNextClinicId, CLINIC_ID_PREFIX } from "@/lib/clinic-ids";
 import { Dialog, dialogInputClass, dialogLabelClass } from "@/components/Dialog";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { PlusIcon } from "@/components/icons/PlusIcon";
@@ -25,6 +26,7 @@ export default function StaffPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Staff | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -95,16 +97,21 @@ export default function StaffPage() {
       department: form.department.trim() || undefined,
       notes: form.notes.trim() || undefined,
     };
+    setFormError(null);
     try {
       if (editingId) {
         await updateStaff(editingId, payload);
       } else {
-        await addStaff({ id: `s-${Date.now()}`, ...payload });
+        const id = getNextClinicId(CLINIC_ID_PREFIX.STAFF, staffList.map((s) => s.id));
+        await addStaff({ id, ...payload });
       }
+      setFormError(null);
       setDialogOpen(false);
       resetForm();
-    } catch (_e) {
-      // Error already surfaced by context or Firestore
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Failed to save staff. Please try again.";
+      if (process.env.NODE_ENV === "development") console.error("[Staff] Firestore save error:", e);
+      setFormError(message);
     }
   };
 
@@ -147,7 +154,7 @@ export default function StaffPage() {
 
       <Dialog
         open={dialogOpen}
-        onClose={() => { setDialogOpen(false); resetForm(); }}
+        onClose={() => { setDialogOpen(false); resetForm(); setFormError(null); }}
         title={editingId ? "Edit staff member" : "Add new staff member"}
         onSave={handleSave}
         saveLabel="Save"
@@ -155,6 +162,11 @@ export default function StaffPage() {
         saveDisabled={!staffFormValid}
       >
         <div className="space-y-4">
+          {formError && (
+            <p className="rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300">
+              {formError}
+            </p>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={dialogLabelClass}>First name *</label>

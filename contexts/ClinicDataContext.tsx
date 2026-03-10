@@ -119,9 +119,33 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
 
   const addPatient = useCallback(
     async (p: Patient) => {
-      if (!db || !userId) return;
-      const { id, ...data } = p;
-      await setDoc(doc(db, COLLECTIONS.PATIENTS, id), stripUndefined({ ...data, userId }));
+      if (!db) {
+        throw new Error("Firestore is not configured. Check your .env.local and restart the dev server.");
+      }
+      if (!userId) {
+        throw new Error("You must be signed in to add a patient.");
+      }
+      const docId = p.id;
+      // Build a plain object with only primitives so Firestore stores every field
+      const patientDoc: Record<string, string> = {
+        userId,
+        firstName: p.firstName ?? "",
+        lastName: p.lastName ?? "",
+        dateOfBirth: p.dateOfBirth ?? "",
+        email: p.email ?? "",
+        phone: p.phone ?? "",
+        gender: p.gender ?? "other",
+      };
+      if (p.bloodType != null && p.bloodType !== "") patientDoc.bloodType = p.bloodType;
+      if (p.address != null && p.address !== "") patientDoc.address = p.address;
+      if (p.lastVisit != null && p.lastVisit !== "") patientDoc.lastVisit = p.lastVisit;
+      if (p.notes != null && p.notes !== "") patientDoc.notes = p.notes;
+      try {
+        await setDoc(doc(db, COLLECTIONS.PATIENTS, docId), patientDoc);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        throw new Error(`Failed to add patient to Firestore: ${message}`);
+      }
     },
     [db, userId]
   );
@@ -144,9 +168,33 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
 
   const addDoctor = useCallback(
     async (d: Doctor) => {
-      if (!db || !userId) return;
-      const { id, ...data } = d;
-      await setDoc(doc(db, COLLECTIONS.DOCTORS, id), stripUndefined({ ...data, userId }));
+      if (!db) {
+        throw new Error("Firestore is not configured. Check your .env.local and restart the dev server.");
+      }
+      if (!userId) {
+        throw new Error("You must be signed in to add a doctor.");
+      }
+      const docId = d.id;
+      const doctorDoc: Record<string, unknown> = {
+        userId,
+        firstName: d.firstName ?? "",
+        lastName: d.lastName ?? "",
+        title: d.title ?? "MD",
+        specializations: Array.isArray(d.specializations) ? d.specializations : [],
+        qualification: d.qualification ?? "",
+        consultationFee: typeof d.consultationFee === "number" ? d.consultationFee : 0,
+        phone: d.phone ?? "",
+        email: d.email ?? "",
+        schedule: Array.isArray(d.schedule) ? d.schedule : [],
+      };
+      if (d.bio != null && d.bio !== "") doctorDoc.bio = d.bio;
+      if (d.profilePhoto != null && d.profilePhoto !== "") doctorDoc.profilePhoto = d.profilePhoto;
+      try {
+        await setDoc(doc(db, COLLECTIONS.DOCTORS, docId), doctorDoc);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        throw new Error(`Failed to add doctor to Firestore: ${message}`);
+      }
     },
     [db, userId]
   );
@@ -169,9 +217,31 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
 
   const addAppointment = useCallback(
     async (a: Appointment) => {
-      if (!db || !userId) return;
-      const { id, ...data } = a;
-      await setDoc(doc(db, COLLECTIONS.APPOINTMENTS, id), stripUndefined({ ...data, userId }));
+      if (!db) {
+        throw new Error("Firestore is not configured. Check your .env.local and restart the dev server.");
+      }
+      if (!userId) {
+        throw new Error("You must be signed in to add an appointment.");
+      }
+      const docId = a.id;
+      const appointmentDoc: Record<string, string> = {
+        userId,
+        patientId: a.patientId ?? "",
+        patientName: a.patientName ?? "",
+        date: a.date ?? "",
+        time: a.time ?? "",
+        type: a.type ?? "checkup",
+        status: a.status ?? "scheduled",
+      };
+      if (a.doctor != null && a.doctor !== "") appointmentDoc.doctor = a.doctor;
+      if (a.doctorId != null && a.doctorId !== "") appointmentDoc.doctorId = a.doctorId;
+      if (a.notes != null && a.notes !== "") appointmentDoc.notes = a.notes;
+      try {
+        await setDoc(doc(db, COLLECTIONS.APPOINTMENTS, docId), appointmentDoc);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        throw new Error(`Failed to add appointment to Firestore: ${message}`);
+      }
     },
     [db, userId]
   );
@@ -186,9 +256,29 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
 
   const addStaff = useCallback(
     async (s: Staff) => {
-      if (!db || !userId) return;
-      const { id, ...data } = s;
-      await setDoc(doc(db, COLLECTIONS.STAFF, id), stripUndefined({ ...data, userId }));
+      if (!db) {
+        throw new Error("Firestore is not configured. Check your .env.local and restart the dev server.");
+      }
+      if (!userId) {
+        throw new Error("You must be signed in to add staff.");
+      }
+      const docId = s.id;
+      const staffDoc: Record<string, string> = {
+        userId,
+        firstName: s.firstName ?? "",
+        lastName: s.lastName ?? "",
+        role: s.role ?? "",
+        email: s.email ?? "",
+        phone: s.phone ?? "",
+      };
+      if (s.department != null && s.department !== "") staffDoc.department = s.department;
+      if (s.notes != null && s.notes !== "") staffDoc.notes = s.notes;
+      try {
+        await setDoc(doc(db, COLLECTIONS.STAFF, docId), staffDoc);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        throw new Error(`Failed to add staff to Firestore: ${message}`);
+      }
     },
     [db, userId]
   );

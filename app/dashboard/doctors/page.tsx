@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useClinicData } from "@/contexts/ClinicDataContext";
+import { getNextClinicId, CLINIC_ID_PREFIX } from "@/lib/clinic-ids";
 import { Dialog, dialogInputClass, dialogLabelClass } from "@/components/Dialog";
 import { PlusIcon } from "@/components/icons/PlusIcon";
 import type { Doctor } from "@/types/doctor";
@@ -45,6 +46,7 @@ export default function DoctorsPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -135,17 +137,21 @@ export default function DoctorsPage() {
       bio: form.bio.trim() || undefined,
       profilePhoto: form.profilePhoto.trim() || undefined,
     };
+    setFormError(null);
     try {
       if (editingId) {
         await updateDoctor(editingId, payload);
       } else {
-        const id = `d-${Date.now()}`;
+        const id = getNextClinicId(CLINIC_ID_PREFIX.DOCTOR, doctorList.map((d) => d.id));
         await addDoctor({ id, ...payload });
       }
+      setFormError(null);
       setDialogOpen(false);
       resetForm();
-    } catch (_e) {
-      // Error already surfaced by context or Firestore
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Failed to save doctor. Please try again.";
+      if (process.env.NODE_ENV === "development") console.error("[Doctors] Firestore save error:", e);
+      setFormError(message);
     }
   };
 
@@ -198,7 +204,7 @@ export default function DoctorsPage() {
 
       <Dialog
         open={dialogOpen}
-        onClose={() => { setDialogOpen(false); resetForm(); }}
+        onClose={() => { setDialogOpen(false); resetForm(); setFormError(null); }}
         title={editingId ? "Edit doctor" : "Add new doctor"}
         onSave={handleSave}
         saveLabel="Save"
@@ -206,6 +212,11 @@ export default function DoctorsPage() {
         saveDisabled={!doctorFormValid}
       >
         <div className="space-y-4">
+          {formError && (
+            <p className="rounded-xl bg-red-50 px-4 py-2.5 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300">
+              {formError}
+            </p>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={dialogLabelClass}>First name *</label>

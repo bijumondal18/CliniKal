@@ -1,24 +1,30 @@
 "use client";
 
-import { Sidebar } from "@/components/Sidebar";
-import { SidebarProvider, useSidebar } from "@/contexts/SidebarContext";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { TopBar } from "@/components/TopBar";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
-  return (
-    <SidebarProvider>
-      <div className="min-h-screen bg-[var(--background)]">
-        <Sidebar />
-        <MainContent>{children}</MainContent>
-      </div>
-    </SidebarProvider>
-  );
-}
+  const { isLoggedIn } = useAuth();
+  const router = useRouter();
 
-function MainContent({ children }: { children: React.ReactNode }) {
-  const { collapsed } = useSidebar();
+  useEffect(() => {
+    if (!isLoggedIn) {
+      router.replace("/login");
+    }
+  }, [isLoggedIn, router]);
+
+  if (!isLoggedIn) {
+    return null;
+  }
+
   return (
-    <main className={`min-h-screen transition-[padding] duration-200 ${collapsed ? "pl-20" : "pl-56"}`}>
-      {children}
-    </main>
+    <div className="min-h-screen bg-[var(--background)]">
+      <TopBar />
+      <main className="min-h-screen px-6 pt-28 pb-8">
+        {children}
+      </main>
+    </div>
   );
 }

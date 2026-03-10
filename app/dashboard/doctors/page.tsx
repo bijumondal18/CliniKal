@@ -353,7 +353,7 @@ export default function DoctorsPage() {
                       <td className="px-5 py-4">
                         <div className="flex flex-wrap gap-1.5">
                           {doc.specializations.slice(0, 2).map((s) => (
-                            <span key={s} className="rounded bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">{s}</span>
+                            <span key={s} className="rounded bg-[var(--muted-bg)] px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">{s}</span>
                           ))}
                         </div>
                       </td>
@@ -426,7 +426,7 @@ export default function DoctorsPage() {
                 {doc.specializations.slice(0, 2).map((s) => (
                   <span
                     key={s}
-                    className="rounded bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/50 dark:text-blue-200"
+                    className="rounded bg-[var(--muted-bg)] px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-200"
                   >
                     {s}
                   </span>

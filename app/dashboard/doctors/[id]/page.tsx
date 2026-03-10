@@ -176,7 +176,7 @@ export default function DoctorDetailPage() {
                 doctor.specializations.map((s) => (
                   <li
                     key={s}
-                    className="rounded-xl bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-800 dark:bg-blue-900/50 dark:text-blue-200"
+                    className="rounded-xl bg-[var(--muted-bg)] px-3 py-1.5 text-sm font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-200"
                   >
                     {s}
                   </li>

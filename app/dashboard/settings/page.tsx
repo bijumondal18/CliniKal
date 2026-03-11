@@ -79,13 +79,15 @@ export default function SettingsPage() {
                   role="switch"
                   aria-checked={settings.notifications[key]}
                   onClick={() => setNotifications({ [key]: !settings.notifications[key] })}
-                  className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-                    settings.notifications[key] ? "bg-blue-600" : "bg-[var(--muted)]"
+                  className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer rounded-full border-0 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[var(--card)] ${
+                    settings.notifications[key]
+                      ? "bg-blue-600"
+                      : "bg-[var(--muted)] dark:bg-gray-600"
                   }`}
                 >
                   <span
-                    className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${
-                      settings.notifications[key] ? "left-6 translate-x-[-100%]" : "left-1"
+                    className={`pointer-events-none absolute top-1 inline-block h-6 w-6 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                      settings.notifications[key] ? "translate-x-7 left-0.5" : "translate-x-0 left-0.5"
                     }`}
                   />
                 </button>
@@ -113,7 +115,7 @@ export default function SettingsPage() {
                     <span className="text-sm font-medium text-[var(--foreground)]">{label}</span>
                   </label>
                   {h.enabled && (
-                    <>
+                    <div className="flex flex-nowrap items-center gap-2">
                       <input
                         type="time"
                         value={h.start}
@@ -127,7 +129,7 @@ export default function SettingsPage() {
                         onChange={(e) => setWorkingHours(day, { end: e.target.value })}
                         className={`${inputClass} min-w-[7.5rem] w-32`}
                       />
-                    </>
+                    </div>
                   )}
                 </div>
               );

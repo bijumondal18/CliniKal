@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { useClinicData } from "@/contexts/ClinicDataContext";
 import { getNextClinicId, CLINIC_ID_PREFIX } from "@/lib/clinic-ids";
 import { Dialog, dialogInputClass, dialogLabelClass, dialogDateTimeInputClass } from "@/components/Dialog";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { PlusIcon } from "@/components/icons/PlusIcon";
 import type { Appointment } from "@/types/appointment";
 
@@ -23,6 +24,11 @@ function formatTime(t: string) {
   const am = hour < 12;
   const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
   return `${h12}:${m} ${am ? "AM" : "PM"}`;
+}
+
+function formatToken(tokenNumber?: number) {
+  if (typeof tokenNumber !== "number" || !Number.isFinite(tokenNumber) || tokenNumber <= 0) return "—";
+  return `#${String(Math.trunc(tokenNumber)).padStart(2, "0")}`;
 }
 
 const statusColors: Record<string, string> = {
@@ -69,12 +75,15 @@ function filterByDateRange(list: Appointment[], range: string): Appointment[] {
 const APPOINTMENT_TYPES = ["checkup", "follow-up", "consultation", "procedure", "other"] as const;
 
 export default function AppointmentsPage() {
-  const { appointments: appointmentList, addAppointment, updateAppointment, patients, doctors } = useClinicData();
+  const { appointments: appointmentList, addAppointment, updateAppointment, removeAppointment, patients, doctors } = useClinicData();
   const [statusFilter, setStatusFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Appointment | null>(null);
+  const [rowSaving, setRowSaving] = useState<Record<string, boolean>>({});
+  const [rowError, setRowError] = useState<Record<string, string>>({});
   const [form, setForm] = useState({
     patientId: "",
     date: "",
@@ -83,12 +92,15 @@ export default function AppointmentsPage() {
     doctorId: "",
     notes: "",
     status: "scheduled" as Appointment["status"],
+    tokenNumber: undefined as number | undefined,
   });
 
   const filtered = useMemo(() => {
-    let list = [...appointmentList].sort(
-      (a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)
-    );
+    let list = [...appointmentList].sort((a, b) => {
+      const byDate = `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`);
+      if (byDate !== 0) return byDate;
+      return (a.tokenNumber ?? 0) - (b.tokenNumber ?? 0);
+    });
     if (statusFilter) list = list.filter((a) => a.status === statusFilter);
     list = filterByDateRange(list, dateFilter);
     return list;
@@ -104,7 +116,15 @@ export default function AppointmentsPage() {
       doctorId: "",
       notes: "",
       status: "scheduled",
+      tokenNumber: undefined,
     });
+  };
+
+  const getNextTokenForDate = (date: string) => {
+    const maxForDay = appointmentList
+      .filter((a) => a.date === date)
+      .reduce((max, a) => Math.max(max, a.tokenNumber ?? 0), 0);
+    return maxForDay + 1;
   };
 
   const appointmentFormValid =
@@ -129,9 +149,45 @@ export default function AppointmentsPage() {
       doctorId: doctorId ?? "",
       notes: apt.notes ?? "",
       status: apt.status,
+      tokenNumber: apt.tokenNumber,
     });
     setEditingId(apt.id);
     setDialogOpen(true);
+  };
+
+  const handleInlineStatusChange = async (apt: Appointment, nextStatus: Appointment["status"]) => {
+    setRowError((prev) => {
+      const { [apt.id]: _omit, ...rest } = prev;
+      void _omit;
+      return rest;
+    });
+    setRowSaving((prev) => ({ ...prev, [apt.id]: true }));
+    try {
+      const payload: Omit<Appointment, "id"> = {
+        tokenNumber: apt.tokenNumber,
+        patientId: apt.patientId,
+        patientName: apt.patientName,
+        date: apt.date,
+        time: apt.time,
+        type: apt.type,
+        status: nextStatus,
+        doctor: apt.doctor,
+        doctorId: apt.doctorId,
+        notes: apt.notes,
+      };
+      await updateAppointment(apt.id, payload);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Failed to update status.";
+      setRowError((prev) => ({ ...prev, [apt.id]: message }));
+    } finally {
+      setRowSaving((prev) => ({ ...prev, [apt.id]: false }));
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    await removeAppointment(deleteTarget.id);
+    setDeleteTarget(null);
   };
 
   const handleSave = async () => {
@@ -139,6 +195,9 @@ export default function AppointmentsPage() {
     const patient = patients.find((p) => p.id === form.patientId);
     const doctor = doctors.find((d) => d.id === form.doctorId);
     if (!patient || !doctor) return;
+    const tokenNumber = editingId
+      ? form.tokenNumber
+      : getNextTokenForDate(form.date);
     const payload = {
       patientId: patient.id,
       patientName: `${patient.firstName} ${patient.lastName}`,
@@ -149,6 +208,7 @@ export default function AppointmentsPage() {
       doctor: `Dr. ${doctor.firstName} ${doctor.lastName}`,
       doctorId: doctor.id,
       notes: form.notes.trim() || undefined,
+      tokenNumber,
     };
     setFormError(null);
     try {
@@ -325,6 +385,7 @@ export default function AppointmentsPage() {
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-[var(--card-border)] bg-[var(--muted-bg)]">
+                <th className="px-5 py-3 font-semibold text-[var(--foreground)]">#</th>
                 <th className="px-5 py-3 font-semibold text-[var(--foreground)]">Date & time</th>
                 <th className="px-5 py-3 font-semibold text-[var(--foreground)]">Patient</th>
                 <th className="px-5 py-3 font-semibold text-[var(--foreground)]">Type</th>
@@ -336,7 +397,7 @@ export default function AppointmentsPage() {
             <tbody className="divide-y divide-[var(--card-border)]">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-[var(--foreground)] opacity-70">
+                  <td colSpan={7} className="px-5 py-12 text-center text-[var(--foreground)] opacity-70">
                     No appointments match the selected filters.
                   </td>
                 </tr>
@@ -346,6 +407,11 @@ export default function AppointmentsPage() {
                     key={apt.id}
                     className="transition-colors hover:bg-[var(--sidebar-hover)]"
                   >
+                    <td className="px-5 py-4">
+                      <span className="inline-flex min-w-10 justify-center rounded-full bg-[var(--muted-bg)] px-2 py-0.5 text-xs font-semibold text-[var(--foreground)]">
+                        {formatToken(apt.tokenNumber)}
+                      </span>
+                    </td>
                     <td className="px-5 py-4">
                       <p className="font-medium text-[var(--foreground)]">
                         {formatDate(apt.date)}
@@ -367,20 +433,49 @@ export default function AppointmentsPage() {
                       {apt.doctor ?? "—"}
                     </td>
                     <td className="px-5 py-4">
-                      <span
-                        className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${statusColors[apt.status] ?? "bg-slate-100 text-slate-600"}`}
-                      >
-                        {apt.status.replace("-", " ")}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={apt.status}
+                          onChange={(e) => void handleInlineStatusChange(apt, e.target.value as Appointment["status"])}
+                          disabled={rowSaving[apt.id]}
+                          className="rounded-lg border border-[var(--card-border)] bg-[var(--muted-bg)] px-2.5 py-1.5 text-xs font-medium text-[var(--foreground)] shadow-soft focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 input-select disabled:cursor-not-allowed disabled:opacity-60"
+                          aria-label={`Change status for ${apt.patientName}`}
+                        >
+                          <option value="scheduled">Scheduled</option>
+                          <option value="confirmed">Confirmed</option>
+                          <option value="in-progress">In progress</option>
+                          <option value="completed">Completed</option>
+                          <option value="cancelled">Cancelled</option>
+                          <option value="no-show">No show</option>
+                        </select>
+                        <span
+                          className={`hidden sm:inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${statusColors[apt.status] ?? "bg-slate-100 text-slate-600"}`}
+                          aria-hidden="true"
+                        >
+                          {apt.status.replace("-", " ")}
+                        </span>
+                      </div>
+                      {rowError[apt.id] ? (
+                        <p className="mt-1 text-xs text-red-600 dark:text-red-400">{rowError[apt.id]}</p>
+                      ) : null}
                     </td>
                     <td className="px-5 py-4">
-                      <button
-                        type="button"
-                        onClick={() => openEdit(apt)}
-                        className="text-blue-600 hover:text-blue-700"
-                      >
-                        Edit
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => openEdit(apt)}
+                          className="text-blue-600 hover:text-blue-700"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTarget(apt)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -389,6 +484,17 @@ export default function AppointmentsPage() {
           </table>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="Delete appointment"
+        message={deleteTarget ? <>Delete appointment for <strong>{deleteTarget.patientName}</strong>?</> : ""}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={handleDeleteConfirm}
+        variant="danger"
+      />
     </div>
   );
 }

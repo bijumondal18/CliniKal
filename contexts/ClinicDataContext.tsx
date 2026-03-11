@@ -38,6 +38,7 @@ type ClinicDataContextType = {
   appointments: Appointment[];
   addAppointment: (a: Appointment) => Promise<void>;
   updateAppointment: (id: string, a: Omit<Appointment, "id">) => Promise<void>;
+  removeAppointment: (id: string) => Promise<void>;
   staff: Staff[];
   addStaff: (s: Staff) => Promise<void>;
   updateStaff: (id: string, s: Omit<Staff, "id">) => Promise<void>;
@@ -335,7 +336,7 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
         throw new Error("You must be signed in to add an appointment.");
       }
       const docId = a.id;
-      const appointmentDoc: Record<string, string> = {
+      const appointmentDoc: Record<string, unknown> = {
         userId,
         patientId: a.patientId ?? "",
         patientName: a.patientName ?? "",
@@ -344,6 +345,7 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
         type: a.type ?? "checkup",
         status: a.status ?? "scheduled",
       };
+      if (a.tokenNumber != null) appointmentDoc.tokenNumber = a.tokenNumber;
       if (a.doctor != null && a.doctor !== "") appointmentDoc.doctor = a.doctor;
       if (a.doctorId != null && a.doctorId !== "") appointmentDoc.doctorId = a.doctorId;
       if (a.notes != null && a.notes !== "") appointmentDoc.notes = a.notes;
@@ -367,6 +369,14 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
       );
     },
     [db, userId, currentClinicId]
+  );
+
+  const removeAppointment = useCallback(
+    async (id: string) => {
+      if (!db || !currentClinicId) return;
+      await deleteDoc(doc(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.APPOINTMENTS, id));
+    },
+    [db, currentClinicId]
   );
 
   const addStaff = useCallback(
@@ -574,6 +584,7 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
     appointments,
     addAppointment,
     updateAppointment,
+    removeAppointment,
     staff,
     addStaff,
     updateStaff,

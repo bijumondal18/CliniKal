@@ -77,6 +77,11 @@ function formatTime(t: string) {
   return `${h12}:${m} ${am ? "AM" : "PM"}`;
 }
 
+function formatToken(tokenNumber?: number) {
+  if (typeof tokenNumber !== "number" || !Number.isFinite(tokenNumber) || tokenNumber <= 0) return "—";
+  return `#${String(Math.trunc(tokenNumber)).padStart(2, "0")}`;
+}
+
 const statusColors: Record<string, string> = {
   scheduled: "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200",
   confirmed: "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300",
@@ -96,8 +101,21 @@ export default function DashboardPage() {
   const today = getTodayString();
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [now, setNow] = useState(() => new Date());
-  const todayAppointments = useMemo(() => appointments.filter((a) => a.date === today), [appointments, today]);
-  const upcomingAppointments = useMemo(() => appointments.filter((a) => a.date >= today).slice(0, 5), [appointments, today]);
+  const todayAppointments = useMemo(
+    () =>
+      appointments
+        .filter((a) => a.date === today)
+        .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`) || (a.tokenNumber ?? 0) - (b.tokenNumber ?? 0)),
+    [appointments, today]
+  );
+  const upcomingAppointments = useMemo(
+    () =>
+      appointments
+        .filter((a) => a.date >= today)
+        .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`) || (a.tokenNumber ?? 0) - (b.tokenNumber ?? 0))
+        .slice(0, 5),
+    [appointments, today]
+  );
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(new Date()), 1000);
@@ -220,7 +238,12 @@ export default function DashboardPage() {
                 todayAppointments.map((apt) => (
                   <li key={apt.id} className="flex items-center justify-between gap-4 px-5 py-4">
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-[var(--foreground)]">{apt.patientName}</p>
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex min-w-10 justify-center rounded-full bg-[var(--muted-bg)] px-2 py-0.5 text-xs font-semibold text-[var(--foreground)]">
+                          {formatToken(apt.tokenNumber)}
+                        </span>
+                        <p className="min-w-0 truncate font-medium text-[var(--foreground)]">{apt.patientName}</p>
+                      </div>
                       <p className="text-sm text-[var(--foreground)] opacity-70">
                         {apt.type.replace("-", " ")} · {apt.doctor}
                       </p>
@@ -255,7 +278,12 @@ export default function DashboardPage() {
               {upcomingAppointments.map((apt) => (
                 <li key={apt.id} className="flex items-center justify-between gap-4 px-5 py-4">
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium text-[var(--foreground)]">{apt.patientName}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex min-w-10 justify-center rounded-full bg-[var(--muted-bg)] px-2 py-0.5 text-xs font-semibold text-[var(--foreground)]">
+                        {formatToken(apt.tokenNumber)}
+                      </span>
+                      <p className="min-w-0 truncate font-medium text-[var(--foreground)]">{apt.patientName}</p>
+                    </div>
                     <p className="text-sm text-[var(--foreground)] opacity-70">
                       {apt.date} at {formatTime(apt.time)}
                     </p>

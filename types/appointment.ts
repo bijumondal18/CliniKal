@@ -8,6 +8,8 @@ export type AppointmentStatus =
 
 export type Appointment = {
   id: string;
+  /** Serial token number for the visit (usually per-day) */
+  tokenNumber?: number;
   patientId: string;
   patientName: string;
   date: string;

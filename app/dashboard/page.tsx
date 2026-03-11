@@ -105,7 +105,7 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="p-4 sm:p-8">
+    <div className="py-4 sm:p-8">
       <header className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold text-[var(--foreground)]">
           Welcome Back, {displayName}.

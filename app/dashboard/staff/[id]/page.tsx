@@ -6,9 +6,14 @@ import { useParams, useRouter } from "next/navigation";
 import { useClinicData } from "@/contexts/ClinicDataContext";
 import { Dialog, dialogInputClass, dialogLabelClass } from "@/components/Dialog";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import type { Staff } from "@/types/staff";
 
 const ROLE_OPTIONS = ["Receptionist", "Nurse", "Medical Assistant", "Administrator", "Other"];
+
+function sanitizePhone10(raw: string) {
+  return raw.replace(/\D/g, "").slice(0, 10);
+}
+
+const PHONE_10_REGEX = /^\d{10}$/;
 
 export default function StaffDetailPage() {
   const params = useParams();
@@ -36,7 +41,7 @@ export default function StaffDetailPage() {
       lastName: staff.lastName,
       role: staff.role,
       email: staff.email,
-      phone: staff.phone,
+      phone: sanitizePhone10(staff.phone),
       department: staff.department ?? "",
       notes: staff.notes ?? "",
     });
@@ -45,6 +50,7 @@ export default function StaffDetailPage() {
 
   const handleSave = async () => {
     if (!staff || !form.firstName.trim() || !form.lastName.trim() || !form.email.trim() || !form.phone.trim()) return;
+    if (!PHONE_10_REGEX.test(form.phone.trim())) return;
     await updateStaff(staff.id, {
       firstName: form.firstName.trim(),
       lastName: form.lastName.trim(),
@@ -68,7 +74,7 @@ export default function StaffDetailPage() {
     form.role.trim() !== "" &&
     form.email.trim() !== "" &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()) &&
-    form.phone.trim() !== "";
+    PHONE_10_REGEX.test(form.phone.trim());
 
   if (!staff) {
     return (
@@ -215,9 +221,12 @@ export default function StaffDetailPage() {
             <input
               type="tel"
               value={form.phone}
-              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+              inputMode="numeric"
+              pattern="\d{10}"
+              maxLength={10}
+              onChange={(e) => setForm((f) => ({ ...f, phone: sanitizePhone10(e.target.value) }))}
               className={dialogInputClass}
-              placeholder="+1 (555) 000-0000"
+              placeholder="10-digit mobile number"
             />
           </div>
           <div>

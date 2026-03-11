@@ -8,6 +8,7 @@ export type Doctor = {
   consultationFee: number;
   phone: string;
   email: string;
+  scheduleTime?: string;
   schedule: DoctorScheduleSlot[];
   bio?: string;
   profilePhoto?: string;

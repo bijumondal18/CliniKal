@@ -291,6 +291,7 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
         consultationFee: typeof d.consultationFee === "number" ? d.consultationFee : 0,
         phone: d.phone ?? "",
         email: d.email ?? "",
+        scheduleTime: typeof d.scheduleTime === "string" ? d.scheduleTime : "",
         schedule: Array.isArray(d.schedule) ? d.schedule : [],
       };
       if (d.bio != null && d.bio !== "") doctorDoc.bio = d.bio;

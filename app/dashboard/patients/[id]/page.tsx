@@ -33,7 +33,12 @@ const statusColors: Record<string, string> = {
 
 const BLOOD_OPTIONS = ["", "A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 
+function sanitizePhone10(raw: string) {
+  return raw.replace(/\D/g, "").slice(0, 10);
+}
+
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_10_REGEX = /^\d{10}$/;
 
 export default function PatientDetailPage() {
   const params = useParams();
@@ -64,7 +69,7 @@ export default function PatientDetailPage() {
       lastName: patient.lastName,
       gender: patient.gender,
       email: patient.email,
-      phone: patient.phone,
+      phone: sanitizePhone10(patient.phone),
       dateOfBirth: patient.dateOfBirth,
       bloodType: patient.bloodType ?? "",
       address: patient.address ?? "",
@@ -75,8 +80,10 @@ export default function PatientDetailPage() {
 
   const handleSave = async () => {
     if (!patient || !form.firstName.trim() || !form.lastName.trim() || !form.email.trim() || !form.phone.trim() || !form.dateOfBirth.trim()) return;
+    if (!PHONE_10_REGEX.test(form.phone.trim())) return;
     const existing = patient;
     const { id: _x, ...rest } = existing;
+    void _x;
     await updatePatient(patient.id, {
       ...rest,
       firstName: form.firstName.trim(),
@@ -102,7 +109,7 @@ export default function PatientDetailPage() {
     form.lastName.trim() !== "" &&
     form.email.trim() !== "" &&
     EMAIL_REGEX.test(form.email.trim()) &&
-    form.phone.trim() !== "" &&
+    PHONE_10_REGEX.test(form.phone.trim()) &&
     form.dateOfBirth.trim() !== "";
 
   if (!patient) {
@@ -301,9 +308,12 @@ export default function PatientDetailPage() {
             <input
               type="tel"
               value={form.phone}
-              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+              inputMode="numeric"
+              pattern="\d{10}"
+              maxLength={10}
+              onChange={(e) => setForm((f) => ({ ...f, phone: sanitizePhone10(e.target.value) }))}
               className={dialogInputClass}
-              placeholder="+1 (555) 000-0000"
+              placeholder="10-digit mobile number"
             />
           </div>
           <div>

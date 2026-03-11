@@ -17,6 +17,10 @@ const dayLabels: Record<string, string> = {
   sat: "Sat",
 };
 
+function sanitizePhone10(raw: string) {
+  return raw.replace(/\D/g, "").slice(0, 10);
+}
+
 function formatTime(t: string) {
   const [h, m] = t.split(":");
   const hour = parseInt(h, 10);
@@ -39,6 +43,7 @@ function matchQuery(text: string, q: string): boolean {
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_10_REGEX = /^\d{10}$/;
 
 export default function DoctorsPage() {
   const { doctors: doctorList, addDoctor, updateDoctor } = useClinicData();
@@ -56,6 +61,7 @@ export default function DoctorsPage() {
     consultationFee: "",
     phone: "",
     email: "",
+    scheduleTime: "",
     bio: "",
     profilePhoto: "",
   });
@@ -81,7 +87,7 @@ export default function DoctorsPage() {
     form.lastName.trim() !== "" &&
     form.email.trim() !== "" &&
     EMAIL_REGEX.test(form.email.trim()) &&
-    form.phone.trim() !== "";
+    PHONE_10_REGEX.test(form.phone.trim());
 
   const resetForm = () => {
     setEditingId(null);
@@ -94,6 +100,7 @@ export default function DoctorsPage() {
       consultationFee: "",
       phone: "",
       email: "",
+      scheduleTime: "",
       bio: "",
       profilePhoto: "",
     });
@@ -107,8 +114,9 @@ export default function DoctorsPage() {
       qualification: doc.qualification,
       specializations: doc.specializations.join(", "),
       consultationFee: String(doc.consultationFee),
-      phone: doc.phone,
+      phone: sanitizePhone10(doc.phone),
       email: doc.email,
+      scheduleTime: doc.scheduleTime ?? "",
       bio: doc.bio ?? "",
       profilePhoto: doc.profilePhoto ?? "",
     });
@@ -118,6 +126,10 @@ export default function DoctorsPage() {
 
   const handleSave = async () => {
     if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim() || !form.phone.trim()) {
+      return;
+    }
+    if (!PHONE_10_REGEX.test(form.phone.trim())) {
+      setFormError("Mobile number must be exactly 10 digits.");
       return;
     }
     const fee = parseInt(form.consultationFee, 10);
@@ -133,6 +145,7 @@ export default function DoctorsPage() {
       consultationFee: Number.isFinite(fee) ? fee : 0,
       phone: form.phone.trim(),
       email: form.email.trim(),
+      scheduleTime: form.scheduleTime.trim() || undefined,
       schedule: editingId ? (doctorList.find((d) => d.id === editingId)?.schedule ?? []) : [],
       bio: form.bio.trim() || undefined,
       profilePhoto: form.profilePhoto.trim() || undefined,
@@ -254,7 +267,7 @@ export default function DoctorsPage() {
               </select>
             </div>
             <div>
-              <label className={dialogLabelClass}>Consultation fee ($) *</label>
+              <label className={dialogLabelClass}>Consultation fee (₹) *</label>
               <input
                 type="number"
                 min={0}
@@ -300,9 +313,22 @@ export default function DoctorsPage() {
             <input
               type="tel"
               value={form.phone}
-              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+              inputMode="numeric"
+              pattern="\d{10}"
+              maxLength={10}
+              onChange={(e) => setForm((f) => ({ ...f, phone: sanitizePhone10(e.target.value) }))}
               className={dialogInputClass}
-              placeholder="+1 (555) 100-2000"
+              placeholder="10-digit mobile number"
+            />
+          </div>
+          <div>
+            <label className={dialogLabelClass}>Schedule time</label>
+            <input
+              type="text"
+              value={form.scheduleTime}
+              onChange={(e) => setForm((f) => ({ ...f, scheduleTime: e.target.value }))}
+              className={dialogInputClass}
+              placeholder="e.g. 10:00 AM – 6:00 PM"
             />
           </div>
           <div>
@@ -372,7 +398,7 @@ export default function DoctorsPage() {
                           ))}
                         </div>
                       </td>
-                      <td className="px-5 py-4 font-medium text-[var(--foreground)]">${doc.consultationFee}</td>
+                      <td className="px-5 py-4 font-medium text-[var(--foreground)]">₹{doc.consultationFee}</td>
                       <td className="px-5 py-4 text-[var(--foreground)] opacity-80">{doc.phone}</td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
@@ -429,7 +455,7 @@ export default function DoctorsPage() {
                     </svg>
                   </button>
                   <span className="rounded-full bg-[var(--muted-bg)] px-2.5 py-0.5 text-xs font-medium text-[var(--foreground)]">
-                    ${doc.consultationFee}
+                    ₹{doc.consultationFee}
                   </span>
                 </div>
               </div>
@@ -448,7 +474,11 @@ export default function DoctorsPage() {
                 ))}
               </div>
               <p className="mt-3 text-xs text-[var(--foreground)] opacity-70">
-                {doc.schedule.length > 0 ? formatSchedule(doc.schedule) : "Schedule not set"}
+                {doc.schedule.length > 0
+                  ? formatSchedule(doc.schedule)
+                  : doc.scheduleTime?.trim()
+                    ? doc.scheduleTime
+                    : "Schedule not set"}
               </p>
               <p className="mt-1 text-xs text-[var(--foreground)] opacity-70">{doc.phone}</p>
               </Link>

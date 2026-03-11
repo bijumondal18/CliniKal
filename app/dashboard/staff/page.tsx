@@ -18,7 +18,12 @@ function matchQuery(text: string, q: string): boolean {
 
 const ROLE_OPTIONS = ["Receptionist", "Nurse", "Medical Assistant", "Administrator", "Other"];
 
+function sanitizePhone10(raw: string) {
+  return raw.replace(/\D/g, "").slice(0, 10);
+}
+
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_10_REGEX = /^\d{10}$/;
 
 export default function StaffPage() {
   const { staff: staffList, addStaff, updateStaff, removeStaff } = useClinicData();
@@ -57,7 +62,7 @@ export default function StaffPage() {
     form.role.trim() !== "" &&
     form.email.trim() !== "" &&
     EMAIL_REGEX.test(form.email.trim()) &&
-    form.phone.trim() !== "";
+    PHONE_10_REGEX.test(form.phone.trim());
 
   const resetForm = () => {
     setEditingId(null);
@@ -78,7 +83,7 @@ export default function StaffPage() {
       lastName: s.lastName,
       role: s.role,
       email: s.email,
-      phone: s.phone,
+      phone: sanitizePhone10(s.phone),
       department: s.department ?? "",
       notes: s.notes ?? "",
     });
@@ -88,6 +93,10 @@ export default function StaffPage() {
 
   const handleSave = async () => {
     if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim() || !form.phone.trim()) return;
+    if (!PHONE_10_REGEX.test(form.phone.trim())) {
+      setFormError("Mobile number must be exactly 10 digits.");
+      return;
+    }
     const payload: Omit<Staff, "id"> = {
       firstName: form.firstName.trim(),
       lastName: form.lastName.trim(),
@@ -216,9 +225,12 @@ export default function StaffPage() {
             <input
               type="tel"
               value={form.phone}
-              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+              inputMode="numeric"
+              pattern="\d{10}"
+              maxLength={10}
+              onChange={(e) => setForm((f) => ({ ...f, phone: sanitizePhone10(e.target.value) }))}
               className={dialogInputClass}
-              placeholder="+1 (555) 000-0000"
+              placeholder="10-digit mobile number"
             />
           </div>
           <div>

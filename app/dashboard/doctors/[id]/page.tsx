@@ -6,7 +6,6 @@ import { useParams, useRouter } from "next/navigation";
 import { useClinicData } from "@/contexts/ClinicDataContext";
 import { Dialog, dialogInputClass, dialogLabelClass } from "@/components/Dialog";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import type { Doctor } from "@/types/doctor";
 
 const dayLabels: Record<string, string> = {
   mon: "Monday",
@@ -16,6 +15,12 @@ const dayLabels: Record<string, string> = {
   fri: "Friday",
   sat: "Saturday",
 };
+
+function sanitizePhone10(raw: string) {
+  return raw.replace(/\D/g, "").slice(0, 10);
+}
+
+const PHONE_10_REGEX = /^\d{10}$/;
 
 function formatTime(t: string) {
   const [h, m] = t.split(":");
@@ -34,6 +39,7 @@ const defaultForm = {
   consultationFee: "",
   phone: "",
   email: "",
+  scheduleTime: "",
   bio: "",
   profilePhoto: "",
 };
@@ -57,8 +63,9 @@ export default function DoctorDetailPage() {
       qualification: doctor.qualification,
       specializations: doctor.specializations.join(", "),
       consultationFee: String(doctor.consultationFee),
-      phone: doctor.phone,
+      phone: sanitizePhone10(doctor.phone),
       email: doctor.email,
+      scheduleTime: doctor.scheduleTime ?? "",
       bio: doctor.bio ?? "",
       profilePhoto: doctor.profilePhoto ?? "",
     });
@@ -67,6 +74,7 @@ export default function DoctorDetailPage() {
 
   const handleSave = async () => {
     if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim() || !form.phone.trim() || !doctor) return;
+    if (!PHONE_10_REGEX.test(form.phone.trim())) return;
     const fee = parseInt(form.consultationFee, 10);
     await updateDoctor(doctor.id, {
       firstName: form.firstName.trim(),
@@ -77,6 +85,7 @@ export default function DoctorDetailPage() {
       consultationFee: Number.isFinite(fee) ? fee : 0,
       phone: form.phone.trim(),
       email: form.email.trim(),
+      scheduleTime: form.scheduleTime.trim() || undefined,
       schedule: doctor.schedule,
       bio: form.bio.trim() || undefined,
       profilePhoto: form.profilePhoto.trim() || undefined,
@@ -94,7 +103,7 @@ export default function DoctorDetailPage() {
     form.lastName.trim() !== "" &&
     form.email.trim() !== "" &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()) &&
-    form.phone.trim() !== "";
+    PHONE_10_REGEX.test(form.phone.trim());
 
   if (!doctor) {
     return (
@@ -156,7 +165,7 @@ export default function DoctorDetailPage() {
               </div>
               <div className="text-right">
                 <p className="text-2xl font-bold text-blue-600">
-                  ${doctor.consultationFee}
+                  ₹{doctor.consultationFee}
                 </p>
                 <p className="text-sm text-[var(--foreground)] opacity-70">Consultation fee</p>
               </div>
@@ -193,31 +202,37 @@ export default function DoctorDetailPage() {
           </div>
         </div>
 
-        {doctor.schedule.length > 0 && (
+        {(doctor.schedule.length > 0 || (doctor.scheduleTime?.trim() ?? "") !== "") && (
           <div className="border-t border-[var(--card-border)] p-6">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--foreground)] opacity-70">
               Schedule & timing
             </h3>
-            <ul className="mt-4 space-y-3">
-              {doctor.schedule.map((slot) => (
-                <li
-                  key={`${slot.day}-${slot.startTime}`}
-                  className="flex items-center justify-between rounded-xl border border-[var(--card-border)] bg-[var(--muted-bg)] px-4 py-3"
-                >
-                  <span className="font-medium text-[var(--foreground)]">
-                    {dayLabels[slot.day] ?? slot.day}
-                  </span>
-                  <span className="text-[var(--foreground)] opacity-80">
-                    {formatTime(slot.startTime)} – {formatTime(slot.endTime)}
-                    {slot.slotMinutes && (
-                      <span className="ml-2 opacity-70">
-                        ({slot.slotMinutes} min slots)
-                      </span>
-                    )}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            {doctor.schedule.length > 0 ? (
+              <ul className="mt-4 space-y-3">
+                {doctor.schedule.map((slot) => (
+                  <li
+                    key={`${slot.day}-${slot.startTime}`}
+                    className="flex items-center justify-between rounded-xl border border-[var(--card-border)] bg-[var(--muted-bg)] px-4 py-3"
+                  >
+                    <span className="font-medium text-[var(--foreground)]">
+                      {dayLabels[slot.day] ?? slot.day}
+                    </span>
+                    <span className="text-[var(--foreground)] opacity-80">
+                      {formatTime(slot.startTime)} – {formatTime(slot.endTime)}
+                      {slot.slotMinutes && (
+                        <span className="ml-2 opacity-70">
+                          ({slot.slotMinutes} min slots)
+                        </span>
+                      )}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-3 text-sm text-[var(--foreground)] opacity-80">
+                {doctor.scheduleTime}
+              </p>
+            )}
           </div>
         )}
 
@@ -278,7 +293,7 @@ export default function DoctorDetailPage() {
               </select>
             </div>
             <div>
-              <label className={dialogLabelClass}>Consultation fee ($) *</label>
+              <label className={dialogLabelClass}>Consultation fee (₹) *</label>
               <input
                 type="number"
                 min={0}
@@ -324,9 +339,22 @@ export default function DoctorDetailPage() {
             <input
               type="tel"
               value={form.phone}
-              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+              inputMode="numeric"
+              pattern="\d{10}"
+              maxLength={10}
+              onChange={(e) => setForm((f) => ({ ...f, phone: sanitizePhone10(e.target.value) }))}
               className={dialogInputClass}
-              placeholder="+1 (555) 100-2000"
+              placeholder="10-digit mobile number"
+            />
+          </div>
+          <div>
+            <label className={dialogLabelClass}>Schedule time</label>
+            <input
+              type="text"
+              value={form.scheduleTime}
+              onChange={(e) => setForm((f) => ({ ...f, scheduleTime: e.target.value }))}
+              className={dialogInputClass}
+              placeholder="e.g. 10:00 AM – 6:00 PM"
             />
           </div>
           <div>

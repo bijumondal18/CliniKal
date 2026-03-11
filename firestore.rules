@@ -38,5 +38,17 @@ service cloud.firestore {
         (resource != null && resource.data.userId == request.auth.uid)
       );
     }
+    match /prescriptions/{docId} {
+      allow read, write: if isSignedIn() && (
+        (resource == null && request.resource.data.userId == request.auth.uid) ||
+        (resource != null && resource.data.userId == request.auth.uid)
+      );
+    }
+    match /reports/{docId} {
+      allow read, write: if isSignedIn() && (
+        (resource == null && request.resource.data.userId == request.auth.uid) ||
+        (resource != null && resource.data.userId == request.auth.uid)
+      );
+    }
   }
 }

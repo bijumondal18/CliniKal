@@ -20,6 +20,8 @@ import type { Doctor } from "@/types/doctor";
 import type { Appointment } from "@/types/appointment";
 import type { Staff } from "@/types/staff";
 import type { ClinicMessage } from "@/types/message";
+import type { Prescription, PrescriptionMedication } from "@/types/prescription";
+import type { Report } from "@/types/report";
 
 type ClinicDataContextType = {
   patients: Patient[];
@@ -44,6 +46,14 @@ type ClinicDataContextType = {
   addMessage: (m: Omit<ClinicMessage, "id" | "createdAt" | "userId">) => Promise<void>;
   updateMessage: (id: string, m: Partial<Omit<ClinicMessage, "id" | "userId" | "createdAt">>) => Promise<void>;
   removeMessage: (id: string) => Promise<void>;
+  prescriptions: Prescription[];
+  addPrescription: (p: Prescription) => Promise<void>;
+  updatePrescription: (id: string, p: Omit<Prescription, "id">) => Promise<void>;
+  removePrescription: (id: string) => Promise<void>;
+  reports: Report[];
+  addReport: (r: Report) => Promise<void>;
+  updateReport: (id: string, r: Omit<Report, "id">) => Promise<void>;
+  removeReport: (id: string) => Promise<void>;
   isDataLoading: boolean;
 };
 
@@ -57,6 +67,8 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
   const [messages, setMessages] = useState<ClinicMessage[]>([]);
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
   const [isDataLoading, setIsDataLoading] = useState(true);
 
   const db = getFirebaseDb();
@@ -68,6 +80,8 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
       setAppointments([]);
       setStaff([]);
       setMessages([]);
+      setPrescriptions([]);
+      setReports([]);
       setIsDataLoading(false);
       return;
     }
@@ -145,6 +159,61 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
           })
           .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
         setMessages(list);
+      })
+    );
+
+    const qPrescriptions = query(
+      collection(db, COLLECTIONS.PRESCRIPTIONS),
+      where("userId", "==", userId)
+    );
+    unsubs.push(
+      onSnapshot(qPrescriptions, (snap) => {
+        const list = snap.docs.map((d) => {
+          const data = d.data();
+          const meds = (data.medications as PrescriptionMedication[] | undefined) ?? [];
+          return {
+            id: d.id,
+            userId: data.userId as string,
+            patientId: data.patientId as string,
+            patientName: data.patientName as string,
+            doctorId: data.doctorId as string,
+            doctorName: data.doctorName as string,
+            date: data.date as string,
+            diagnosis: data.diagnosis as string | undefined,
+            medications: Array.isArray(meds) ? meds : [],
+            notes: data.notes as string | undefined,
+            followUp: data.followUp as string | undefined,
+          } as Prescription;
+        });
+        setPrescriptions(list);
+      })
+    );
+
+    const qReports = query(
+      collection(db, COLLECTIONS.REPORTS),
+      where("userId", "==", userId)
+    );
+    unsubs.push(
+      onSnapshot(qReports, (snap) => {
+        const list = snap.docs.map((d) => {
+          const data = d.data();
+          return {
+            id: d.id,
+            userId: data.userId as string,
+            patientId: data.patientId as string,
+            patientName: data.patientName as string,
+            doctorId: data.doctorId as string,
+            doctorName: data.doctorName as string,
+            type: data.type as Report["type"],
+            title: data.title as string,
+            date: data.date as string,
+            summary: data.summary as string | undefined,
+            findings: data.findings as string | undefined,
+            fileUrl: data.fileUrl as string | undefined,
+            status: data.status as Report["status"],
+          } as Report;
+        });
+        setReports(list);
       })
     );
 
@@ -393,6 +462,88 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
     [db]
   );
 
+  const addPrescription = useCallback(
+    async (p: Prescription) => {
+      if (!db || !userId) throw new Error("Not configured or not signed in.");
+      const docId = p.id;
+      const medications = Array.isArray(p.medications) ? p.medications : [];
+      const docData: Record<string, unknown> = {
+        userId,
+        patientId: p.patientId ?? "",
+        patientName: p.patientName ?? "",
+        doctorId: p.doctorId ?? "",
+        doctorName: p.doctorName ?? "",
+        date: p.date ?? "",
+        medications,
+      };
+      if (p.diagnosis != null && p.diagnosis !== "") docData.diagnosis = p.diagnosis;
+      if (p.notes != null && p.notes !== "") docData.notes = p.notes;
+      if (p.followUp != null && p.followUp !== "") docData.followUp = p.followUp;
+      await setDoc(doc(db, COLLECTIONS.PRESCRIPTIONS, docId), docData);
+    },
+    [db, userId]
+  );
+
+  const updatePrescription = useCallback(
+    async (id: string, p: Omit<Prescription, "id">) => {
+      if (!db || !userId) return;
+      const medications = Array.isArray(p.medications) ? p.medications : [];
+      await setDoc(
+        doc(db, COLLECTIONS.PRESCRIPTIONS, id),
+        stripUndefined({ ...p, userId, medications }),
+        { merge: true }
+      );
+    },
+    [db, userId]
+  );
+
+  const removePrescription = useCallback(
+    async (id: string) => {
+      if (!db) return;
+      await deleteDoc(doc(db, COLLECTIONS.PRESCRIPTIONS, id));
+    },
+    [db]
+  );
+
+  const addReport = useCallback(
+    async (r: Report) => {
+      if (!db || !userId) throw new Error("Not configured or not signed in.");
+      const docId = r.id;
+      const docData: Record<string, unknown> = {
+        userId,
+        patientId: r.patientId ?? "",
+        patientName: r.patientName ?? "",
+        doctorId: r.doctorId ?? "",
+        doctorName: r.doctorName ?? "",
+        type: r.type ?? "other",
+        title: r.title ?? "",
+        date: r.date ?? "",
+        status: r.status ?? "pending",
+      };
+      if (r.summary != null && r.summary !== "") docData.summary = r.summary;
+      if (r.findings != null && r.findings !== "") docData.findings = r.findings;
+      if (r.fileUrl != null && r.fileUrl !== "") docData.fileUrl = r.fileUrl;
+      await setDoc(doc(db, COLLECTIONS.REPORTS, docId), docData);
+    },
+    [db, userId]
+  );
+
+  const updateReport = useCallback(
+    async (id: string, r: Omit<Report, "id">) => {
+      if (!db || !userId) return;
+      await setDoc(doc(db, COLLECTIONS.REPORTS, id), stripUndefined({ ...r, userId }), { merge: true });
+    },
+    [db, userId]
+  );
+
+  const removeReport = useCallback(
+    async (id: string) => {
+      if (!db) return;
+      await deleteDoc(doc(db, COLLECTIONS.REPORTS, id));
+    },
+    [db]
+  );
+
   const value: ClinicDataContextType = {
     patients,
     addPatient,
@@ -416,6 +567,14 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
     addMessage,
     updateMessage,
     removeMessage,
+    prescriptions,
+    addPrescription,
+    updatePrescription,
+    removePrescription,
+    reports,
+    addReport,
+    updateReport,
+    removeReport,
     isDataLoading,
   };
 

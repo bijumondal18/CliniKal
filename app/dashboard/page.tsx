@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useClinicData } from "@/contexts/ClinicDataContext";
 
 function getTodayString() {
@@ -13,14 +15,16 @@ function StatCard({
   value,
   subtitle,
   icon,
+  href,
 }: {
   title: string;
   value: string | number;
   subtitle?: string;
   icon: React.ReactNode;
+  href?: string;
 }) {
-  return (
-    <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--card)] p-5 shadow-soft">
+  const content = (
+    <>
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm font-medium text-[var(--foreground)] opacity-70">{title}</p>
@@ -33,8 +37,24 @@ function StatCard({
           {icon}
         </div>
       </div>
-    </div>
+    </>
   );
+
+  const cardClass =
+    "rounded-2xl border border-[var(--card-border)] bg-[var(--card)] p-5 shadow-soft transition-all duration-200 " +
+    (href
+      ? "hover:border-blue-500/50 hover:shadow-md hover:shadow-blue-500/10 cursor-pointer"
+      : "");
+
+  if (href) {
+    return (
+      <Link href={href} className={`block ${cardClass}`}>
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className={cardClass}>{content}</div>;
 }
 
 function formatTime(t: string) {
@@ -55,7 +75,9 @@ const statusColors: Record<string, string> = {
 };
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   const { appointments, patients } = useClinicData();
+  const username = ((user?.displayName ?? (user?.email ? user.email.split("@")[0] : "")) || "there").replace(/^./, (c) => c.toUpperCase());
   const today = getTodayString();
   const todayAppointments = useMemo(() => appointments.filter((a) => a.date === today), [appointments, today]);
   const upcomingAppointments = useMemo(() => appointments.filter((a) => a.date >= today).slice(0, 5), [appointments, today]);
@@ -63,14 +85,14 @@ export default function DashboardPage() {
   return (
     <div className="p-8">
       <header className="mb-8">
-        <h1 className="text-2xl font-bold text-[var(--foreground)]">Overview</h1>
-        <p className="mt-1 text-[var(--foreground)] opacity-70">
-          Your clinic at a glance
-        </p>
+        <h1 className="text-2xl font-bold text-[var(--foreground)]">
+          Welcome back, {username}.
+        </h1>
       </header>
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
+          href="/dashboard/appointments"
           title="Today's appointments"
           value={todayAppointments.length}
           subtitle={today}
@@ -81,6 +103,7 @@ export default function DashboardPage() {
           }
         />
         <StatCard
+          href="/dashboard/patients"
           title="Total patients"
           value={patients.length}
           subtitle="Registered"
@@ -91,6 +114,7 @@ export default function DashboardPage() {
           }
         />
         <StatCard
+          href="/dashboard/appointments"
           title="Scheduled"
           value={appointments.filter((a) => a.status === "scheduled" || a.status === "confirmed").length}
           subtitle="Upcoming"
@@ -101,6 +125,7 @@ export default function DashboardPage() {
           }
         />
         <StatCard
+          href="/dashboard/appointments"
           title="Completed today"
           value={appointments.filter((a) => a.date === today && a.status === "completed").length}
           subtitle="So far"
@@ -113,64 +138,74 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-2">
-        <section className="rounded-2xl border border-[var(--card-border)] bg-[var(--card)] shadow-soft">
-          <div className="border-b border-[var(--card-border)] px-5 py-4">
-            <h2 className="font-semibold text-[var(--foreground)]">Today&apos;s schedule</h2>
-            <p className="text-sm text-[var(--foreground)] opacity-70">March 10, 2025</p>
-          </div>
-          <ul className="divide-y divide-[var(--card-border)]">
-            {todayAppointments.length === 0 ? (
-              <li className="px-5 py-8 text-center text-sm text-[var(--foreground)] opacity-70">
-                No appointments today
-              </li>
-            ) : (
-              todayAppointments.map((apt) => (
+        <Link
+          href="/dashboard/appointments"
+          className="block cursor-pointer rounded-2xl border border-[var(--card-border)] bg-[var(--card)] shadow-soft transition-all duration-200 hover:border-blue-500/50 hover:shadow-md hover:shadow-blue-500/10"
+        >
+          <section>
+            <div className="border-b border-[var(--card-border)] px-5 py-4">
+              <h2 className="font-semibold text-[var(--foreground)]">Today&apos;s schedule</h2>
+              <p className="text-sm text-[var(--foreground)] opacity-70">March 10, 2025</p>
+            </div>
+            <ul className="divide-y divide-[var(--card-border)]">
+              {todayAppointments.length === 0 ? (
+                <li className="px-5 py-8 text-center text-sm text-[var(--foreground)] opacity-70">
+                  No appointments today
+                </li>
+              ) : (
+                todayAppointments.map((apt) => (
+                  <li key={apt.id} className="flex items-center justify-between gap-4 px-5 py-4">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-[var(--foreground)]">{apt.patientName}</p>
+                      <p className="text-sm text-[var(--foreground)] opacity-70">
+                        {apt.type.replace("-", " ")} · {apt.doctor}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-3">
+                      <span className="text-sm font-medium text-[var(--foreground)] opacity-90">
+                        {formatTime(apt.time)}
+                      </span>
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${statusColors[apt.status] ?? "bg-slate-100 text-slate-600"}`}
+                      >
+                        {apt.status.replace("-", " ")}
+                      </span>
+                    </div>
+                  </li>
+                ))
+              )}
+            </ul>
+          </section>
+        </Link>
+
+        <Link
+          href="/dashboard/appointments"
+          className="block cursor-pointer rounded-2xl border border-[var(--card-border)] bg-[var(--card)] shadow-soft transition-all duration-200 hover:border-blue-500/50 hover:shadow-md hover:shadow-blue-500/10"
+        >
+          <section>
+            <div className="border-b border-[var(--card-border)] px-5 py-4">
+              <h2 className="font-semibold text-[var(--foreground)]">Upcoming appointments</h2>
+              <p className="text-sm text-[var(--foreground)] opacity-70">Next 5</p>
+            </div>
+            <ul className="divide-y divide-[var(--card-border)]">
+              {upcomingAppointments.map((apt) => (
                 <li key={apt.id} className="flex items-center justify-between gap-4 px-5 py-4">
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-[var(--foreground)]">{apt.patientName}</p>
                     <p className="text-sm text-[var(--foreground)] opacity-70">
-                      {apt.type.replace("-", " ")} · {apt.doctor}
+                      {apt.date} at {formatTime(apt.time)}
                     </p>
                   </div>
-                  <div className="flex shrink-0 items-center gap-3">
-                    <span className="text-sm font-medium text-[var(--foreground)] opacity-90">
-                      {formatTime(apt.time)}
-                    </span>
-                    <span
-                      className={`rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${statusColors[apt.status] ?? "bg-slate-100 text-slate-600"}`}
-                    >
-                      {apt.status.replace("-", " ")}
-                    </span>
-                  </div>
+                  <span
+                    className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${statusColors[apt.status] ?? "bg-slate-100 text-slate-600"}`}
+                  >
+                    {apt.status.replace("-", " ")}
+                  </span>
                 </li>
-              ))
-            )}
-          </ul>
-        </section>
-
-        <section className="rounded-2xl border border-[var(--card-border)] bg-[var(--card)] shadow-soft">
-          <div className="border-b border-[var(--card-border)] px-5 py-4">
-            <h2 className="font-semibold text-[var(--foreground)]">Upcoming appointments</h2>
-            <p className="text-sm text-[var(--foreground)] opacity-70">Next 5</p>
-          </div>
-          <ul className="divide-y divide-[var(--card-border)]">
-            {upcomingAppointments.map((apt) => (
-              <li key={apt.id} className="flex items-center justify-between gap-4 px-5 py-4">
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-[var(--foreground)]">{apt.patientName}</p>
-                  <p className="text-sm text-[var(--foreground)] opacity-70">
-                    {apt.date} at {formatTime(apt.time)}
-                  </p>
-                </div>
-                <span
-                  className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${statusColors[apt.status] ?? "bg-slate-100 text-slate-600"}`}
-                >
-                  {apt.status.replace("-", " ")}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
+              ))}
+            </ul>
+          </section>
+        </Link>
       </div>
     </div>
   );

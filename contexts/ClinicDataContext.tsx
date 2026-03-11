@@ -8,7 +8,9 @@ import {
   query,
   where,
   setDoc,
+  addDoc,
   deleteDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 import { getFirebaseDb, COLLECTIONS } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,6 +19,7 @@ import type { Patient } from "@/types/patient";
 import type { Doctor } from "@/types/doctor";
 import type { Appointment } from "@/types/appointment";
 import type { Staff } from "@/types/staff";
+import type { ClinicMessage } from "@/types/message";
 
 type ClinicDataContextType = {
   patients: Patient[];
@@ -37,6 +40,10 @@ type ClinicDataContextType = {
   updateStaff: (id: string, s: Omit<Staff, "id">) => Promise<void>;
   removeStaff: (id: string) => Promise<void>;
   getStaffById: (id: string) => Staff | undefined;
+  messages: ClinicMessage[];
+  addMessage: (m: Omit<ClinicMessage, "id" | "createdAt" | "userId">) => Promise<void>;
+  updateMessage: (id: string, m: Partial<Omit<ClinicMessage, "id" | "userId" | "createdAt">>) => Promise<void>;
+  removeMessage: (id: string) => Promise<void>;
   isDataLoading: boolean;
 };
 
@@ -49,6 +56,7 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
+  const [messages, setMessages] = useState<ClinicMessage[]>([]);
   const [isDataLoading, setIsDataLoading] = useState(true);
 
   const db = getFirebaseDb();
@@ -59,6 +67,7 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
       setDoctors([]);
       setAppointments([]);
       setStaff([]);
+      setMessages([]);
       setIsDataLoading(false);
       return;
     }
@@ -107,6 +116,35 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
       onSnapshot(qStaff, (snap) => {
         const list = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Staff));
         setStaff(list);
+      })
+    );
+
+    const qMessages = query(
+      collection(db, COLLECTIONS.MESSAGES),
+      where("userId", "==", userId)
+    );
+    unsubs.push(
+      onSnapshot(qMessages, (snap) => {
+        const list = snap.docs
+          .map((d) => {
+            const data = d.data();
+            const createdAt = data.createdAt?.toDate?.()?.toISOString?.() ?? new Date().toISOString();
+            return {
+              id: d.id,
+              userId: data.userId as string,
+              sentBy: (data.sentBy as ClinicMessage["sentBy"]) ?? "clinic",
+              recipientType: data.recipientType as "doctor" | "patient",
+              recipientId: data.recipientId as string,
+              recipientName: data.recipientName as string,
+              text: data.text as string,
+              createdAt,
+              sendViaWhatsApp: data.sendViaWhatsApp === true,
+              sendViaSms: data.sendViaSms === true,
+              sendViaEmail: data.sendViaEmail === true,
+            } as ClinicMessage;
+          })
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+        setMessages(list);
       })
     );
 
@@ -299,6 +337,62 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
     [db]
   );
 
+  const addMessage = useCallback(
+    async (m: Omit<ClinicMessage, "id" | "createdAt" | "userId">) => {
+      if (!db) {
+        throw new Error("Firestore is not configured. Check your .env.local and restart the dev server.");
+      }
+      if (!userId) {
+        throw new Error("You must be signed in to send a message.");
+      }
+      const sentBy = m.sentBy ?? "clinic";
+      try {
+        await addDoc(collection(db, COLLECTIONS.MESSAGES), {
+          userId,
+          sentBy,
+          recipientType: m.recipientType,
+          recipientId: m.recipientId,
+          recipientName: m.recipientName,
+          text: m.text ?? "",
+          createdAt: serverTimestamp(),
+          sendViaWhatsApp: m.sendViaWhatsApp === true,
+          sendViaSms: m.sendViaSms === true,
+          sendViaEmail: m.sendViaEmail === true,
+        });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        throw new Error(`Failed to send message: ${message}`);
+      }
+    },
+    [db, userId]
+  );
+
+  const updateMessage = useCallback(
+    async (id: string, m: Partial<Omit<ClinicMessage, "id" | "userId" | "createdAt">>) => {
+      if (!db || !userId) return;
+      const docRef = doc(db, COLLECTIONS.MESSAGES, id);
+      const update: Record<string, unknown> = {};
+      if (m.recipientType != null) update.recipientType = m.recipientType;
+      if (m.recipientId != null) update.recipientId = m.recipientId;
+      if (m.recipientName != null) update.recipientName = m.recipientName;
+      if (m.text != null) update.text = m.text;
+      if (m.sentBy != null) update.sentBy = m.sentBy;
+      if (typeof m.sendViaWhatsApp === "boolean") update.sendViaWhatsApp = m.sendViaWhatsApp;
+      if (typeof m.sendViaSms === "boolean") update.sendViaSms = m.sendViaSms;
+      if (typeof m.sendViaEmail === "boolean") update.sendViaEmail = m.sendViaEmail;
+      await setDoc(docRef, update, { merge: true });
+    },
+    [db, userId]
+  );
+
+  const removeMessage = useCallback(
+    async (id: string) => {
+      if (!db) return;
+      await deleteDoc(doc(db, COLLECTIONS.MESSAGES, id));
+    },
+    [db]
+  );
+
   const value: ClinicDataContextType = {
     patients,
     addPatient,
@@ -318,6 +412,10 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
     updateStaff,
     removeStaff,
     getStaffById: (id: string) => staff.find((x) => x.id === id),
+    messages,
+    addMessage,
+    updateMessage,
+    removeMessage,
     isDataLoading,
   };
 

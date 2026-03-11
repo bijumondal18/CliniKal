@@ -32,5 +32,11 @@ service cloud.firestore {
     match /clinics/{docId} {
       allow read, write: if isSignedIn() && docId == request.auth.uid;
     }
+    match /messages/{docId} {
+      allow read, write: if isSignedIn() && (
+        (resource == null && request.resource.data.userId == request.auth.uid) ||
+        (resource != null && resource.data.userId == request.auth.uid)
+      );
+    }
   }
 }

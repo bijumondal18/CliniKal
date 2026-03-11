@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
 import { useClinicData } from "@/contexts/ClinicDataContext";
@@ -54,6 +54,8 @@ export function TopBar() {
   const { currentClinic, saveClinic } = useClinic();
   const { patients, doctors, appointments, prescriptions, reports } = useClinicData();
   const [profileForm, setProfileForm] = useState({ clinicName: "", clinicAddress: "", clinicImage: "" });
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -84,6 +86,7 @@ export function TopBar() {
         clinicAddress: currentClinic?.clinicAddress ?? "",
         clinicImage: currentClinic?.clinicImage ?? "",
       });
+      setLocationError(null);
     }
   }, [profileDialogOpen, currentClinic?.clinicName, currentClinic?.clinicAddress, currentClinic?.clinicImage]);
 
@@ -232,6 +235,48 @@ export function TopBar() {
     reader.onload = () => setProfileForm((prev) => ({ ...prev, clinicImage: reader.result as string }));
     reader.readAsDataURL(file);
   };
+
+  const handleCurrentLocation = useCallback(() => {
+    setLocationError(null);
+    setLocationLoading(true);
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setLocationError("Geolocation is not supported by your browser.");
+      setLocationLoading(false);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+            { headers: { "Accept-Language": "en", "User-Agent": "Clinikal-Patient-Dashboard/1.0" } }
+          );
+          if (!res.ok) throw new Error("Failed to fetch address");
+          const data = (await res.json()) as { display_name?: string };
+          const address = data.display_name?.trim() || `${latitude}, ${longitude}`;
+          setProfileForm((prev) => ({ ...prev, clinicAddress: address }));
+          setLocationError(null);
+        } catch {
+          setLocationError("Could not resolve address. Using coordinates.");
+          setProfileForm((prev) => ({ ...prev, clinicAddress: `${latitude}, ${longitude}` }));
+        } finally {
+          setLocationLoading(false);
+        }
+      },
+      (err: GeolocationPositionError) => {
+        const message =
+          err.code === 1
+            ? "Location permission denied."
+            : err.code === 2
+              ? "Location unavailable."
+              : "Location request timed out.";
+        setLocationError(message);
+        setLocationLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  }, []);
 
   const handleLogoutConfirm = async () => {
     await logout();
@@ -587,6 +632,29 @@ export function TopBar() {
               placeholder="Street, city, state, ZIP"
               rows={3}
             />
+            <button
+              type="button"
+              onClick={handleCurrentLocation}
+              disabled={locationLoading}
+              className="mt-2 flex items-center gap-2 px-0 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {locationLoading ? (
+                "Getting location…"
+              ) : (
+                <>
+                  <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Current location
+                </>
+              )}
+            </button>
+            {locationError && (
+              <p className="mt-1.5 text-sm text-amber-600 dark:text-amber-400" role="alert">
+                {locationError}
+              </p>
+            )}
           </div>
         </div>
       </Dialog>

@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
+import { useClinicData } from "@/contexts/ClinicDataContext";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Dialog, dialogInputClass, dialogLabelClass } from "@/components/Dialog";
+import { HelpDialog } from "@/components/HelpDialog";
 
 const topNavItems = [
   { href: "/dashboard", label: "Dashboard" },
@@ -43,14 +45,19 @@ export function TopBar() {
   const { user, logout } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const [notificationDialogOpen, setNotificationDialogOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>(initialNotifications);
   const { currentClinic, saveClinic } = useClinic();
+  const { patients, doctors, appointments, prescriptions, reports } = useClinicData();
   const [profileForm, setProfileForm] = useState({ clinicName: "", clinicAddress: "", clinicImage: "" });
   const profileRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -88,12 +95,120 @@ export function TopBar() {
       if (notificationRef.current && notificationDialogOpen && !notificationRef.current.contains(e.target as Node)) {
         setNotificationDialogOpen(false);
       }
+      if (searchRef.current && searchOpen && !searchRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [notificationDialogOpen]);
+  }, [notificationDialogOpen, searchOpen]);
+
+  useEffect(() => {
+    if (searchOpen) {
+      const id = window.setTimeout(() => searchInputRef.current?.focus(), 0);
+      return () => window.clearTimeout(id);
+    } else {
+      setSearchQuery("");
+    }
+  }, [searchOpen]);
 
   const initials = user?.email ? user.email.slice(0, 2).toUpperCase() : (user?.displayName?.slice(0, 2).toUpperCase() ?? "?");
+
+  type GlobalResult = {
+    key: string;
+    type: "Patient" | "Doctor" | "Appointment" | "Prescription" | "Report";
+    title: string;
+    subtitle?: string;
+    href: string;
+  };
+
+  const globalResults = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return [] as GlobalResult[];
+
+    function match(text: string) {
+      return text.toLowerCase().includes(q);
+    }
+
+    const results: GlobalResult[] = [];
+
+    for (const p of patients) {
+      const title = `${p.firstName} ${p.lastName}`.trim();
+      const blob = [title, p.email ?? "", p.phone ?? ""].join(" ");
+      if (match(blob)) {
+        results.push({
+          key: `patient:${p.id}`,
+          type: "Patient",
+          title,
+          subtitle: p.phone || p.email ? [p.phone, p.email].filter(Boolean).join(" • ") : undefined,
+          href: `/dashboard/patients/${p.id}`,
+        });
+      }
+    }
+
+    for (const d of doctors) {
+      const title = `Dr. ${d.firstName} ${d.lastName}`.trim();
+      const blob = [title, d.email ?? "", d.phone ?? "", d.qualification ?? "", ...(d.specializations ?? [])].join(" ");
+      if (match(blob)) {
+        results.push({
+          key: `doctor:${d.id}`,
+          type: "Doctor",
+          title,
+          subtitle: d.specializations?.length ? d.specializations.join(", ") : d.qualification || undefined,
+          href: `/dashboard/doctors/${d.id}`,
+        });
+      }
+    }
+
+    for (const a of appointments) {
+      const title = `${a.patientName || "Appointment"}${a.date ? ` • ${a.date}` : ""}${a.time ? ` ${a.time}` : ""}`;
+      const blob = [a.patientName ?? "", a.doctor ?? "", a.type ?? "", a.status ?? "", a.date ?? "", a.time ?? ""].join(" ");
+      if (match(blob)) {
+        results.push({
+          key: `appointment:${a.id}`,
+          type: "Appointment",
+          title,
+          subtitle: [a.doctor, a.status].filter(Boolean).join(" • ") || undefined,
+          href: "/dashboard/appointments",
+        });
+      }
+    }
+
+    for (const pr of prescriptions) {
+      const title = pr.patientName ? `Prescription • ${pr.patientName}` : "Prescription";
+      const blob = [
+        pr.patientName ?? "",
+        pr.doctorName ?? "",
+        pr.notes ?? "",
+        ...(pr.medications?.map((m) => `${m.name ?? ""} ${m.dosage ?? ""}`) ?? []),
+      ].join(" ");
+      if (match(blob)) {
+        results.push({
+          key: `prescription:${pr.id}`,
+          type: "Prescription",
+          title,
+          subtitle: [pr.doctorName, pr.createdAt].filter(Boolean).join(" • ") || undefined,
+          href: "/dashboard/prescriptions",
+        });
+      }
+    }
+
+    for (const r of reports) {
+      const title = r.patientName ? `Report • ${r.patientName}` : "Report";
+      const blob = [r.patientName ?? "", r.doctorName ?? "", r.reportType ?? "", r.summary ?? "", r.createdAt ?? ""].join(" ");
+      if (match(blob)) {
+        results.push({
+          key: `report:${r.id}`,
+          type: "Report",
+          title,
+          subtitle: [r.reportType, r.createdAt].filter(Boolean).join(" • ") || undefined,
+          href: "/dashboard/reports",
+        });
+      }
+    }
+
+    return results.slice(0, 12);
+  }, [appointments, doctors, patients, prescriptions, reports, searchQuery]);
 
   const handleLogoutClick = () => {
     setProfileOpen(false);
@@ -161,17 +276,105 @@ export function TopBar() {
 
       {/* Right: Search, Notification, Profile */}
       <div className="flex shrink-0 items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setSearchOpen(!searchOpen)}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--muted-bg)] text-[var(--foreground)] opacity-80 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-          title="Search"
-          aria-label="Search"
-        >
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </button>
+        <div className="relative" ref={searchRef}>
+          <div
+            className={`flex items-center rounded-full bg-[var(--muted-bg)] transition-[width] duration-300 ease-out ${
+              searchOpen ? "w-72" : "w-9"
+            }`}
+          >
+            <button
+              type="button"
+              onClick={() => setSearchOpen((v) => !v)}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--foreground)] opacity-80 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              title="Search"
+              aria-label="Search"
+              aria-expanded={searchOpen}
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+            <div
+              className={`flex items-center gap-2 overflow-hidden transition-[opacity,width] duration-300 ease-out ${
+                searchOpen ? "w-[calc(100%-2.25rem)] opacity-100 pr-3" : "w-0 opacity-0 pr-0"
+              }`}
+            >
+              <input
+                ref={searchInputRef}
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") setSearchOpen(false);
+                  if (e.key === "Enter" && globalResults[0]) {
+                    router.push(globalResults[0].href);
+                    setSearchOpen(false);
+                  }
+                }}
+                className="min-w-0 flex-1 bg-transparent px-1 text-sm text-[var(--foreground)] outline-none placeholder:opacity-60"
+                placeholder="Search..."
+                aria-label="Global search"
+              />
+              {searchQuery.trim() !== "" && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="flex h-6 w-6 items-center justify-center rounded-full text-[var(--foreground)] opacity-60 hover:bg-[var(--sidebar-hover)] hover:opacity-100"
+                  aria-label="Clear search"
+                  title="Clear"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          </div>
+
+          {searchOpen && searchQuery.trim() !== "" && (
+            <div
+              role="dialog"
+              aria-modal="false"
+              className="absolute right-0 top-full z-50 mt-2 w-[min(28rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-[var(--card-border)] bg-[var(--card)] shadow-soft"
+            >
+              <div className="border-b border-[var(--card-border)] px-4 py-3">
+                <p className="text-sm font-semibold text-[var(--foreground)]">Search results</p>
+                <p className="text-xs text-[var(--foreground)] opacity-60">Patients, doctors, appointments, prescriptions, reports</p>
+              </div>
+              <div className="max-h-[min(70vh,22rem)] overflow-y-auto overscroll-contain p-2">
+                {globalResults.length === 0 ? (
+                  <p className="px-4 py-8 text-center text-sm text-[var(--foreground)] opacity-70">No results.</p>
+                ) : (
+                  <ul className="space-y-1">
+                    {globalResults.map((r) => (
+                      <li key={r.key}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            router.push(r.href);
+                            setSearchOpen(false);
+                          }}
+                          className="flex w-full items-start gap-3 rounded-xl px-4 py-3 text-left transition-colors hover:bg-[var(--sidebar-hover)]"
+                        >
+                          <span className="mt-0.5 inline-flex shrink-0 rounded-full bg-[var(--muted-bg)] px-2 py-0.5 text-xs font-medium text-[var(--foreground)] opacity-80">
+                            {r.type}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-medium text-[var(--foreground)]">{r.title}</span>
+                            {r.subtitle && (
+                              <span className="mt-0.5 block truncate text-xs text-[var(--foreground)] opacity-70">
+                                {r.subtitle}
+                              </span>
+                            )}
+                          </span>
+                          <span className="shrink-0 text-xs text-blue-600">Open →</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
         <div className="relative" ref={notificationRef}>
           <button
             type="button"
@@ -278,6 +481,13 @@ export function TopBar() {
                 <p className="text-sm font-medium text-[var(--foreground)]">{user?.email ?? user?.displayName ?? "User"}</p>
                 <p className="text-xs text-[var(--foreground)] opacity-70">Logged in</p>
               </div>
+              <button
+                type="button"
+                onClick={handleProfileClick}
+                className="block w-full px-4 py-2 text-left text-sm text-[var(--foreground)] hover:bg-[var(--sidebar-hover)]"
+              >
+                Profile
+              </button>
               <Link
                 href="/dashboard/settings"
                 onClick={() => setProfileOpen(false)}
@@ -287,10 +497,13 @@ export function TopBar() {
               </Link>
               <button
                 type="button"
-                onClick={handleProfileClick}
+                onClick={() => {
+                  setProfileOpen(false);
+                  setHelpOpen(true);
+                }}
                 className="block w-full px-4 py-2 text-left text-sm text-[var(--foreground)] hover:bg-[var(--sidebar-hover)]"
               >
-                Profile
+                Help
               </button>
               <button
                 type="button"
@@ -374,6 +587,8 @@ export function TopBar() {
           </div>
         </div>
       </Dialog>
+
+      <HelpDialog open={helpOpen} onClose={() => setHelpOpen(false)} />
     </header>
   );
 }

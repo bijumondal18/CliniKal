@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { HelpDialog } from "@/components/HelpDialog";
 
 const overviewIcon = "M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z";
 
@@ -79,6 +81,7 @@ export function Sidebar() {
   const router = useRouter();
   const { collapsed, setCollapsed } = useSidebar();
   const { logout } = useAuth();
+  const [helpOpen, setHelpOpen] = useState(false);
   const isOverviewActive = pathname === "/dashboard";
 
   const handleLogout = () => {
@@ -169,6 +172,22 @@ export function Sidebar() {
             />
             <button
               type="button"
+              onClick={() => setHelpOpen(true)}
+              className={`flex w-full items-center transition-colors rounded-lg text-white/80 hover:bg-white/10 hover:text-white ${
+                collapsed ? "justify-center py-2.5" : "gap-3 px-3 py-2.5"
+              }`}
+              title="Help"
+              aria-label="Help"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.257 9.257a3 3 0 015.486 1.013c0 1.5-1 2.25-2 2.75s-1 1-.999 2.23m.004 3.75h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </span>
+              {!collapsed && <span className="text-sm font-medium">Help</span>}
+            </button>
+            <button
+              type="button"
               onClick={handleLogout}
               className={`flex w-full items-center transition-colors rounded-lg text-white/80 hover:bg-white/10 hover:text-white ${
                 collapsed ? "justify-center py-2.5" : "gap-3 px-3 py-2.5"
@@ -221,6 +240,8 @@ export function Sidebar() {
           </div>
         )}
       </div>
+
+      <HelpDialog open={helpOpen} onClose={() => setHelpOpen(false)} />
     </aside>
   );
 }

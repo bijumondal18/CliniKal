@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useClinicData } from "@/contexts/ClinicDataContext";
 import { getNextClinicId, CLINIC_ID_PREFIX } from "@/lib/clinic-ids";
-import { Dialog, dialogInputClass, dialogLabelClass } from "@/components/Dialog";
+import { Dialog, dialogInputClass, dialogLabelClass, dialogDateTimeInputClass } from "@/components/Dialog";
 import { PlusIcon } from "@/components/icons/PlusIcon";
 import type { Appointment } from "@/types/appointment";
 
@@ -265,7 +265,7 @@ export default function AppointmentsPage() {
                 type="date"
                 value={form.date}
                 onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-                className={dialogInputClass}
+                className={dialogDateTimeInputClass}
               />
             </div>
             <div>
@@ -274,7 +274,7 @@ export default function AppointmentsPage() {
                 type="time"
                 value={form.time}
                 onChange={(e) => setForm((f) => ({ ...f, time: e.target.value }))}
-                className={dialogInputClass}
+                className={dialogDateTimeInputClass}
               />
             </div>
           </div>

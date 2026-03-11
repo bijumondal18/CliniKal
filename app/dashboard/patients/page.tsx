@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useClinicData } from "@/contexts/ClinicDataContext";
 import { getNextClinicId, CLINIC_ID_PREFIX } from "@/lib/clinic-ids";
-import { Dialog, dialogInputClass, dialogLabelClass } from "@/components/Dialog";
+import { Dialog, dialogInputClass, dialogLabelClass, dialogDateTimeInputClass } from "@/components/Dialog";
 import { PlusIcon } from "@/components/icons/PlusIcon";
 import type { Patient } from "@/types/patient";
 
@@ -249,7 +249,7 @@ export default function PatientsPage() {
               type="date"
               value={form.dateOfBirth}
               onChange={(e) => setForm((f) => ({ ...f, dateOfBirth: e.target.value }))}
-              className={dialogInputClass}
+              className={dialogDateTimeInputClass}
             />
           </div>
           <div>

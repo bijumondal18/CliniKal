@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useClinicData } from "@/contexts/ClinicDataContext";
-import { Dialog, dialogInputClass, dialogLabelClass } from "@/components/Dialog";
+import { Dialog, dialogInputClass, dialogLabelClass, dialogDateTimeInputClass } from "@/components/Dialog";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { PlusIcon } from "@/components/icons/PlusIcon";
 import { getNextClinicId, CLINIC_ID_PREFIX } from "@/lib/clinic-ids";
@@ -227,7 +227,7 @@ export default function PrescriptionsPage() {
           </div>
           <div>
             <label className={dialogLabelClass}>Date *</label>
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={dialogInputClass} />
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={dialogDateTimeInputClass} />
           </div>
           <div>
             <label className={dialogLabelClass}>Diagnosis</label>

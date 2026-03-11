@@ -25,6 +25,8 @@ export type ClinicSettings = {
   notifications: NotificationSettings;
   workingHours: WorkingHoursSettings;
   clinicAddress: string;
+  clinicName: string;
+  clinicImage: string;
   maxPatientsPerDoctor: Record<string, number>;
 };
 
@@ -49,6 +51,8 @@ const defaultSettings: ClinicSettings = {
   notifications: defaultNotifications,
   workingHours: defaultWorkingHours,
   clinicAddress: "",
+  clinicName: "",
+  clinicImage: "",
   maxPatientsPerDoctor: {},
 };
 
@@ -62,6 +66,8 @@ function loadSettings(): ClinicSettings {
       notifications: { ...defaultNotifications, ...parsed.notifications },
       workingHours: { ...defaultWorkingHours, ...parsed.workingHours },
       clinicAddress: parsed.clinicAddress ?? defaultSettings.clinicAddress,
+      clinicName: parsed.clinicName ?? defaultSettings.clinicName,
+      clinicImage: parsed.clinicImage ?? defaultSettings.clinicImage,
       maxPatientsPerDoctor: parsed.maxPatientsPerDoctor ?? defaultSettings.maxPatientsPerDoctor,
     };
   } catch {
@@ -79,6 +85,8 @@ type SettingsContextType = {
   setNotifications: (n: Partial<NotificationSettings>) => void;
   setWorkingHours: (day: WorkingHoursDay, hours: Partial<DayHours>) => void;
   setClinicAddress: (address: string) => void;
+  setClinicName: (name: string) => void;
+  setClinicImage: (image: string) => void;
   setMaxPatientsForDoctor: (doctorId: string, max: number) => void;
 };
 
@@ -121,6 +129,22 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const setClinicName = useCallback((name: string) => {
+    setSettings((prev) => {
+      const next = { ...prev, clinicName: name };
+      saveSettings(next);
+      return next;
+    });
+  }, []);
+
+  const setClinicImage = useCallback((image: string) => {
+    setSettings((prev) => {
+      const next = { ...prev, clinicImage: image };
+      saveSettings(next);
+      return next;
+    });
+  }, []);
+
   const setMaxPatientsForDoctor = useCallback((doctorId: string, max: number) => {
     setSettings((prev) => {
       const next =
@@ -142,6 +166,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         setNotifications,
         setWorkingHours,
         setClinicAddress,
+        setClinicName,
+        setClinicImage,
         setMaxPatientsForDoctor,
       }}
     >

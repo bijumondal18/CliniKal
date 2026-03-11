@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useClinic } from "@/contexts/ClinicContext";
 import { useClinicData } from "@/contexts/ClinicDataContext";
 
 function getTodayString() {
@@ -76,8 +77,11 @@ const statusColors: Record<string, string> = {
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { clinic } = useClinic();
   const { appointments, patients } = useClinicData();
-  const username = ((user?.displayName ?? (user?.email ? user.email.split("@")[0] : "")) || "there").replace(/^./, (c) => c.toUpperCase());
+  const displayName = clinic?.clinicName?.trim()
+    ? clinic.clinicName.trim().replace(/^./, (c) => c.toUpperCase())
+    : ((user?.displayName ?? (user?.email ? user.email.split("@")[0] : "")) || "there").replace(/^./, (c) => c.toUpperCase());
   const today = getTodayString();
   const todayAppointments = useMemo(() => appointments.filter((a) => a.date === today), [appointments, today]);
   const upcomingAppointments = useMemo(() => appointments.filter((a) => a.date >= today).slice(0, 5), [appointments, today]);
@@ -86,7 +90,7 @@ export default function DashboardPage() {
     <div className="p-8">
       <header className="mb-8">
         <h1 className="text-2xl font-bold text-[var(--foreground)]">
-          Welcome back, {username}.
+          Welcome Back, {displayName}.
         </h1>
       </header>
 

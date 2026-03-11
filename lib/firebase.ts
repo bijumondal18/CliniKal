@@ -49,4 +49,5 @@ export const COLLECTIONS = {
   DOCTORS: "doctors",
   APPOINTMENTS: "appointments",
   STAFF: "staffs",
+  CLINICS: "clinics",
 } as const;

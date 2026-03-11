@@ -4,7 +4,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useClinic } from "@/contexts/ClinicContext";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { Dialog, dialogInputClass, dialogLabelClass } from "@/components/Dialog";
 
 const topNavItems = [
   { href: "/dashboard", label: "Dashboard" },
@@ -40,10 +42,13 @@ export function TopBar() {
   const router = useRouter();
   const { user, logout } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const [notificationDialogOpen, setNotificationDialogOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>(initialNotifications);
+  const { clinic, saveClinic } = useClinic();
+  const [profileForm, setProfileForm] = useState({ clinicName: "", clinicAddress: "", clinicImage: "" });
   const profileRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
 
@@ -66,6 +71,16 @@ export function TopBar() {
   }, [notificationDialogOpen]);
 
   useEffect(() => {
+    if (profileDialogOpen) {
+      setProfileForm({
+        clinicName: clinic?.clinicName ?? "",
+        clinicAddress: clinic?.clinicAddress ?? "",
+        clinicImage: clinic?.clinicImage ?? "",
+      });
+    }
+  }, [profileDialogOpen, clinic?.clinicName, clinic?.clinicAddress, clinic?.clinicImage]);
+
+  useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
         setProfileOpen(false);
@@ -83,6 +98,24 @@ export function TopBar() {
   const handleLogoutClick = () => {
     setProfileOpen(false);
     setLogoutConfirmOpen(true);
+  };
+
+  const handleProfileClick = () => {
+    setProfileOpen(false);
+    setProfileDialogOpen(true);
+  };
+
+  const handleProfileSave = async () => {
+    await saveClinic(profileForm);
+    setProfileDialogOpen(false);
+  };
+
+  const handleClinicImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = () => setProfileForm((prev) => ({ ...prev, clinicImage: reader.result as string }));
+    reader.readAsDataURL(file);
   };
 
   const handleLogoutConfirm = async () => {
@@ -224,9 +257,17 @@ export function TopBar() {
             aria-expanded={profileOpen}
             aria-haspopup="true"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--primary-muted)] text-sm font-semibold text-blue-700 dark:text-blue-200">
-              {initials}
-            </div>
+            {clinic?.clinicImage ? (
+              <img
+                src={clinic.clinicImage}
+                alt="Clinic"
+                className="h-9 w-9 rounded-full object-cover border-2 border-[var(--card-border)]"
+              />
+            ) : (
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--primary-muted)] text-sm font-semibold text-blue-700 dark:text-blue-200">
+                {initials}
+              </div>
+            )}
             <svg className="h-4 w-4 text-[var(--foreground)] opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
@@ -246,8 +287,15 @@ export function TopBar() {
               </Link>
               <button
                 type="button"
+                onClick={handleProfileClick}
+                className="block w-full px-4 py-2 text-left text-sm text-[var(--foreground)] hover:bg-[var(--sidebar-hover)]"
+              >
+                Profile
+              </button>
+              <button
+                type="button"
                 onClick={handleLogoutClick}
-                className="w-full px-4 py-2 text-left text-sm text-[var(--foreground)] hover:bg-[var(--sidebar-hover)]"
+                className="block w-full px-4 py-2 text-left text-sm text-[var(--foreground)] hover:bg-[var(--sidebar-hover)]"
               >
                 Logout
               </button>
@@ -267,6 +315,65 @@ export function TopBar() {
         variant="primary"
       />
 
+      <Dialog
+        open={profileDialogOpen}
+        onClose={() => setProfileDialogOpen(false)}
+        title="Profile"
+        onSave={handleProfileSave}
+        saveLabel="Save"
+        cancelLabel="Cancel"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className={dialogLabelClass}>Clinic image</label>
+            <div className="flex flex-col gap-2">
+              {profileForm.clinicImage ? (
+                <div className="relative">
+                  <img
+                    src={profileForm.clinicImage}
+                    alt="Clinic"
+                    className="h-24 w-24 rounded-xl object-cover border border-[var(--card-border)]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setProfileForm((prev) => ({ ...prev, clinicImage: "" }))}
+                    className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white text-xs hover:bg-red-600"
+                    aria-label="Remove image"
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : null}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleClinicImageChange}
+                className="text-sm text-[var(--foreground)] file:mr-2 file:rounded-lg file:border-0 file:bg-[var(--muted-bg)] file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-[var(--foreground)]"
+              />
+            </div>
+          </div>
+          <div>
+            <label className={dialogLabelClass}>Clinic name</label>
+            <input
+              type="text"
+              value={profileForm.clinicName}
+              onChange={(e) => setProfileForm((prev) => ({ ...prev, clinicName: e.target.value }))}
+              className={dialogInputClass}
+              placeholder="e.g. City Medical Center"
+            />
+          </div>
+          <div>
+            <label className={dialogLabelClass}>Clinic address</label>
+            <textarea
+              value={profileForm.clinicAddress}
+              onChange={(e) => setProfileForm((prev) => ({ ...prev, clinicAddress: e.target.value }))}
+              className={`${dialogInputClass} min-h-[80px] resize-y`}
+              placeholder="Street, city, state, ZIP"
+              rows={3}
+            />
+          </div>
+        </div>
+      </Dialog>
     </header>
   );
 }

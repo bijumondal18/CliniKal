@@ -29,5 +29,8 @@ service cloud.firestore {
         (resource != null && resource.data.userId == request.auth.uid)
       );
     }
+    match /clinics/{docId} {
+      allow read, write: if isSignedIn() && docId == request.auth.uid;
+    }
   }
 }

@@ -25,8 +25,9 @@ git push -u origin main
 2. Click **Add New…** → **Project**.
 3. Import your **patient-dashboard** repository.
 4. **Configure project**
-   - Framework Preset: **Next.js** (auto-detected).
-   - Root Directory: leave default.
+   - **Framework Preset:** **Next.js** (should auto-detect; if not, choose it manually).
+   - **Root Directory:** Leave **empty** or set to **`.`** so Vercel uses the repo root (where `package.json` and `next` live).  
+     ⚠️ If you see *"No Next.js version detected"*, go to **Settings → General → Root Directory** and clear it, or set it to **`.`**.
    - Build Command: `npm run build` (default).
    - Output Directory: leave default.
 5. **Environment variables**  
@@ -89,3 +90,10 @@ Open [http://localhost:3000](http://localhost:3000). After login, the app will u
 | 4 | (Optional) Add custom domain in Vercel + Firebase |
 
 After step 3, your dashboard is live and usable at the Vercel URL.
+
+### "No Next.js version detected"
+
+- **Root Directory:** In Vercel go to **Project → Settings → General**. Under **Root Directory**, leave it **empty** or set to **`.`**. If it’s set to a subfolder but your repo root *is* the app, clear it.
+- **Repo layout:** If your Git repo is a parent folder and the Next app is in a subfolder (e.g. `my-repo/patient-dashboard/`), set **Root Directory** to that subfolder, e.g. `patient-dashboard`.
+- **Commit package.json:** Ensure `package.json` (with `"next"` in `dependencies`) is committed and pushed.
+- This repo includes a `vercel.json` with `"framework": "nextjs"` to help Vercel detect Next.js.

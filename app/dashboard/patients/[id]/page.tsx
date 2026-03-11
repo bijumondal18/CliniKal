@@ -114,7 +114,7 @@ export default function PatientDetailPage() {
 
   if (!patient) {
     return (
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         <p className="text-[var(--foreground)] opacity-80">Patient not found.</p>
         <Link href="/dashboard/patients" className="mt-4 inline-block text-blue-600 hover:text-blue-700">
           ← Back to patients
@@ -124,7 +124,7 @@ export default function PatientDetailPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       <div className="mb-6">
         <Link
           href="/dashboard/patients"

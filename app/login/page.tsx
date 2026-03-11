@@ -51,9 +51,9 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[var(--background)] p-4">
-      <div className="flex w-full max-w-4xl overflow-hidden rounded-2xl border border-[var(--card-border)] bg-[var(--card)] shadow-soft">
+      <div className="flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-[var(--card-border)] bg-[var(--card)] shadow-soft lg:flex-row">
         {/* Left panel - branding with gradient */}
-        <div className="hidden w-[42%] flex-col justify-between bg-gradient-to-b from-blue-50 via-[var(--primary-muted)] to-blue-100 p-8 dark:from-blue-950/40 dark:via-blue-900/30 dark:to-blue-950/50 sm:flex">
+        <div className="hidden w-[42%] flex-col justify-between bg-gradient-to-b from-blue-50 via-[var(--primary-muted)] to-blue-100 p-8 dark:from-blue-950/40 dark:via-blue-900/30 dark:to-blue-950/50 lg:flex">
           <div>
             <div className="flex items-center gap-2">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600">
@@ -73,7 +73,7 @@ export default function LoginPage() {
         </div>
 
         {/* Right panel - form */}
-        <div className="flex flex-1 flex-col justify-center p-8 sm:p-10">
+        <div className="flex flex-1 flex-col justify-center p-6 sm:p-8 lg:p-10">
           <div className="mx-auto w-full max-w-sm">
             <div className="mb-2 flex items-start gap-1.5">
               <span className="mt-1.5 text-sm text-blue-600 dark:text-blue-400" aria-hidden>*</span>

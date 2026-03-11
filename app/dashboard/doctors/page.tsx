@@ -169,7 +169,7 @@ export default function DoctorsPage() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[var(--foreground)]">Doctors</h1>
@@ -177,11 +177,11 @@ export default function DoctorsPage() {
             All doctors and their details
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
           <button
             type="button"
             onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-            className="rounded-xl border border-[var(--card-border)] bg-[var(--muted-bg)] p-2.5 text-[var(--foreground)] shadow-soft hover:bg-[var(--sidebar-hover)] hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 opacity-80"
+            className="self-start rounded-xl border border-[var(--card-border)] bg-[var(--muted-bg)] p-2.5 text-[var(--foreground)] shadow-soft hover:bg-[var(--sidebar-hover)] hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 opacity-80 sm:self-auto"
             title={viewMode === "grid" ? "Switch to list view" : "Switch to grid view"}
             aria-label={viewMode === "grid" ? "Switch to list view" : "Switch to grid view"}
           >
@@ -200,12 +200,12 @@ export default function DoctorsPage() {
             placeholder="Search doctors..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="rounded-xl border border-[var(--card-border)] bg-[var(--muted-bg)] px-4 py-2.5 text-sm text-[var(--foreground)] shadow-soft placeholder:opacity-60 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="w-full rounded-xl border border-[var(--card-border)] bg-[var(--muted-bg)] px-4 py-2.5 text-sm text-[var(--foreground)] shadow-soft placeholder:opacity-60 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:w-auto"
           />
           <button
             type="button"
             onClick={() => { resetForm(); setDialogOpen(true); }}
-            className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-soft hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-soft hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:w-auto"
           >
             <span className="flex items-center gap-2">
               <PlusIcon className="h-4 w-4" />

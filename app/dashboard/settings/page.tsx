@@ -24,7 +24,7 @@ export default function SettingsPage() {
   const { doctors } = useClinicData();
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       <header className="mb-8">
         <h1 className="text-2xl font-bold text-[var(--foreground)]">Settings</h1>
         <p className="mt-1 text-[var(--foreground)] opacity-70">

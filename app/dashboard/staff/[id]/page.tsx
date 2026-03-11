@@ -78,7 +78,7 @@ export default function StaffDetailPage() {
 
   if (!staff) {
     return (
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         <p className="text-[var(--foreground)] opacity-80">Staff member not found.</p>
         <Link href="/dashboard/staff" className="mt-4 inline-block text-blue-600 hover:text-blue-700">
           ← Back to staff
@@ -88,7 +88,7 @@ export default function StaffDetailPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       <div className="mb-6">
         <Link
           href="/dashboard/staff"

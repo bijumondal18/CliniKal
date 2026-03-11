@@ -151,7 +151,7 @@ export default function StaffPage() {
           <button
             type="button"
             onClick={() => { resetForm(); setDialogOpen(true); }}
-            className="w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-soft hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:w-auto"
+            className="w-fit self-start rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-soft hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:w-auto sm:self-auto"
           >
             <span className="flex items-center gap-2">
               <PlusIcon className="h-4 w-4" />

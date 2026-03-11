@@ -16,7 +16,8 @@ type DialogProps = {
 const inputClass =
   "w-full rounded-xl border border-[var(--card-border)] bg-[var(--muted-bg)] px-4 py-2.5 text-sm text-[var(--foreground)] shadow-soft placeholder:opacity-60 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
 /** Use for type="date" and type="time": black calendar/clock icons in light mode, white in dark mode */
-const dateTimeInputClass = `${inputClass} [color-scheme:light] dark:[color-scheme:dark]`;
+const dateTimeInputClass =
+  "w-full rounded-xl border border-[var(--card-border)] bg-[var(--muted-bg)] px-4 py-3 text-sm leading-5 text-[var(--foreground)] shadow-soft placeholder:opacity-60 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 [color-scheme:light] dark:[color-scheme:dark]";
 const labelClass = "mb-1.5 block text-sm font-medium text-[var(--foreground)] opacity-90";
 
 export function Dialog({

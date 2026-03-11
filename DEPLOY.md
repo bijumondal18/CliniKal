@@ -42,7 +42,9 @@ git push -u origin main
 
    Set them for **Production** (and optionally Preview if you use branches).
 
-6. Click **Deploy**.  
+6. **Production branch:** Under **Settings → Git**, set **Production Branch** to **main** (or whichever branch you use for production).
+
+7. Click **Deploy**.  
    Vercel will build and give you a URL like `https://patient-dashboard-xxx.vercel.app`.
 
 ---

@@ -10,15 +10,15 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Dialog, dialogInputClass, dialogLabelClass } from "@/components/Dialog";
 import { HelpDialog } from "@/components/HelpDialog";
 
-const topNavItems = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/dashboard/patients", label: "Patients" },
-  { href: "/dashboard/doctors", label: "Doctors" },
-  { href: "/dashboard/prescriptions", label: "Prescriptions" },
-  { href: "/dashboard/appointments", label: "Appointments" },
-  { href: "/dashboard/reports", label: "Reports" },
-  { href: "/dashboard/messages", label: "Messages" },
-  { href: "/dashboard/staff", label: "Staffs" },
+const topNavItems: { href: string; label: string; icon: string }[] = [
+  { href: "/dashboard", label: "Dashboard", icon: "M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" },
+  { href: "/dashboard/patients", label: "Patients", icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" },
+  { href: "/dashboard/doctors", label: "Doctors", icon: "M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" },
+  { href: "/dashboard/prescriptions", label: "Prescriptions", icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" },
+  { href: "/dashboard/appointments", label: "Appointments", icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },
+  { href: "/dashboard/reports", label: "Reports", icon: "M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" },
+  { href: "/dashboard/messages", label: "Messages", icon: "M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" },
+  { href: "/dashboard/staff", label: "Staffs", icon: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" },
 ];
 
 type NotificationType = "appointment" | "message" | "support_ticket";
@@ -239,20 +239,19 @@ export function TopBar() {
   };
 
   return (
-    <header className="fixed left-4 right-4 top-4 z-30 flex min-h-14 items-center justify-between gap-4 rounded-full border border-[var(--card-border)] bg-[var(--card)] px-6 py-3 shadow-soft">
-      {/* Left: Logo + name */}
-      <div className="flex shrink-0 items-center gap-2">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600">
-          <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-          </svg>
-        </div>
-        <span className="text-lg font-semibold tracking-tight text-[var(--foreground)]">Clinikal</span>
-      </div>
+    <header className="fixed left-4 right-4 top-4 z-30 flex h-14 items-center justify-between gap-4 overflow-visible rounded-full border border-[var(--card-border)] bg-[var(--card)] px-6 py-3 shadow-soft">
+      {/* Left: Logo branding - slightly overflows bar for presence */}
+      <Link href="/dashboard" className="-my-1 flex shrink-0 items-center self-stretch" aria-label="Clinikal home">
+        <img
+          src="/clinikal-logo.png"
+          alt="Clinikal"
+          className="h-20 w-auto max-w-[420px] object-contain object-left sm:h-[5.5rem] sm:max-w-[480px]"
+        />
+      </Link>
 
-      {/* Middle: Pill nav - no scroll, fits in one row */}
-      <nav className="flex min-w-0 flex-1 justify-center">
-        <div className="flex flex-wrap items-center justify-center gap-0.5 rounded-full bg-[var(--muted-bg)] p-1">
+      {/* Middle: Pill nav - single line; icons only on small, text from lg */}
+      <nav className="flex min-w-0 flex-1 justify-center overflow-x-auto overflow-y-hidden">
+        <div className="flex flex-none flex-nowrap items-center justify-center gap-0.5 rounded-full bg-[var(--muted-bg)] p-1">
           {topNavItems.map((item) => {
             const isActive =
               pathname === item.href ||
@@ -261,13 +260,17 @@ export function TopBar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                title={item.label}
+                className={`flex items-center justify-center gap-1.5 rounded-full transition-colors ${
                   isActive
                     ? "bg-[var(--card)] text-[var(--foreground)] shadow-soft"
                     : "text-[var(--foreground)] opacity-70 hover:opacity-100"
-                }`}
+                } ${"p-2 lg:px-3 lg:py-1.5"}`}
               >
-                {item.label}
+                <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
+                </svg>
+                <span className="hidden whitespace-nowrap text-sm font-medium lg:inline">{item.label}</span>
               </Link>
             );
           })}

@@ -452,12 +452,18 @@ export function TopBar() {
             )}
           </button>
           {notificationDialogOpen && (
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="notifications-dialog-title"
-              className="absolute right-0 top-full z-50 mt-2 w-[min(24rem,calc(100vw-2rem))] rounded-2xl border border-[var(--card-border)] bg-[var(--card)] shadow-soft"
-            >
+            <>
+              <div
+                className="fixed inset-0 z-40 bg-black/40 sm:hidden"
+                aria-hidden
+                onClick={() => setNotificationDialogOpen(false)}
+              />
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="notifications-dialog-title"
+                className="fixed left-1/2 top-1/2 z-50 w-[min(24rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[var(--card-border)] bg-[var(--card)] shadow-soft sm:absolute sm:left-auto sm:top-full sm:z-50 sm:mt-2 sm:w-[min(24rem,calc(100vw-2rem))] sm:translate-x-0 sm:translate-y-0 sm:right-0"
+              >
               <div className="border-b border-[var(--card-border)] px-4 py-3">
                 <h2 id="notifications-dialog-title" className="text-base font-semibold text-[var(--foreground)]">
                   Notifications
@@ -509,7 +515,8 @@ export function TopBar() {
                   Close
                 </button>
               </div>
-            </div>
+              </div>
+            </>
           )}
         </div>
         <div className="relative" ref={profileRef}>

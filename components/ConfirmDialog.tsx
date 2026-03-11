@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+
 type ConfirmDialogProps = {
   open: boolean;
   onClose: () => void;
@@ -21,6 +23,17 @@ export function ConfirmDialog({
   onConfirm,
   variant = "danger",
 }: ConfirmDialogProps) {
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
   if (!open) return null;
 
   const handleConfirm = async () => {

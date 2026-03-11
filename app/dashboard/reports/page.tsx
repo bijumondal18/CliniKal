@@ -46,6 +46,8 @@ export default function ReportsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Report | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [rowSaving, setRowSaving] = useState<Record<string, boolean>>({});
+  const [rowError, setRowError] = useState<Record<string, string>>({});
   const [patientFilter, setPatientFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [search, setSearch] = useState("");
@@ -144,6 +146,36 @@ export default function ReportsPage() {
     if (deleteTarget) {
       await removeReport(deleteTarget.id);
       setDeleteTarget(null);
+    }
+  };
+
+  const handleInlineStatusChange = async (r: Report, nextStatus: Report["status"]) => {
+    setRowError((prev) => {
+      const { [r.id]: _omit, ...rest } = prev;
+      void _omit;
+      return rest;
+    });
+    setRowSaving((prev) => ({ ...prev, [r.id]: true }));
+    try {
+      const payload: Omit<Report, "id"> = {
+        patientId: r.patientId,
+        patientName: r.patientName,
+        doctorId: r.doctorId,
+        doctorName: r.doctorName,
+        type: r.type,
+        title: r.title,
+        date: r.date,
+        status: nextStatus,
+        summary: r.summary,
+        findings: r.findings,
+        fileUrl: r.fileUrl,
+      };
+      await updateReport(r.id, payload);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Failed to update status.";
+      setRowError((prev) => ({ ...prev, [r.id]: message }));
+    } finally {
+      setRowSaving((prev) => ({ ...prev, [r.id]: false }));
     }
   };
 
@@ -312,7 +344,28 @@ export default function ReportsPage() {
                     </td>
                     <td className="px-5 py-4 text-[var(--foreground)] opacity-80">{formatDate(r.date)}</td>
                     <td className="px-5 py-4">
-                      <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${statusColors[r.status] ?? ""}`}>{r.status}</span>
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={r.status}
+                          onChange={(e) => void handleInlineStatusChange(r, e.target.value as Report["status"])}
+                          disabled={rowSaving[r.id]}
+                          className="rounded-lg border border-[var(--card-border)] bg-[var(--muted-bg)] px-2.5 py-1.5 text-xs font-medium text-[var(--foreground)] shadow-soft focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 input-select disabled:cursor-not-allowed disabled:opacity-60"
+                          aria-label={`Change report status for ${r.title}`}
+                        >
+                          {REPORT_STATUSES.map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                        <span
+                          className={`hidden sm:inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${statusColors[r.status] ?? ""}`}
+                          aria-hidden="true"
+                        >
+                          {r.status}
+                        </span>
+                      </div>
+                      {rowError[r.id] ? (
+                        <p className="mt-1 text-xs text-red-600 dark:text-red-400">{rowError[r.id]}</p>
+                      ) : null}
                     </td>
                     <td className="px-5 py-4">
                       <button type="button" onClick={() => openEdit(r)} className="text-blue-600 hover:text-blue-700 mr-2">Edit</button>

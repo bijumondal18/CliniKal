@@ -25,6 +25,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <main className="min-h-screen px-6 pt-28 pb-8">
         {children}
       </main>
+      <footer className="border-t border-[var(--card-border)] px-6 py-6 text-center text-xs text-[var(--foreground)] opacity-60">
+        © {new Date().getFullYear()} Clinikal. All rights reserved.
+      </footer>
     </div>
   );
 }

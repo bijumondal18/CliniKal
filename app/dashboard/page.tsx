@@ -1,14 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClinic } from "@/contexts/ClinicContext";
 import { useClinicData } from "@/contexts/ClinicDataContext";
+import { Dialog, dialogInputClass, dialogLabelClass } from "@/components/Dialog";
 
 function getTodayString() {
   const d = new Date();
   return d.toISOString().slice(0, 10);
+}
+
+function formatDateChip(isoDate: string) {
+  const d = new Date(isoDate);
+  if (Number.isNaN(d.getTime())) return isoDate;
+  return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+}
+
+function formatTimeChip(d: Date) {
+  return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 
 function StatCard({
@@ -83,16 +94,65 @@ export default function DashboardPage() {
     ? currentClinic.clinicName.trim().replace(/^./, (c) => c.toUpperCase())
     : ((user?.displayName ?? (user?.email ? user.email.split("@")[0] : "")) || "there").replace(/^./, (c) => c.toUpperCase());
   const today = getTodayString();
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [now, setNow] = useState(() => new Date());
   const todayAppointments = useMemo(() => appointments.filter((a) => a.date === today), [appointments, today]);
   const upcomingAppointments = useMemo(() => appointments.filter((a) => a.date >= today).slice(0, 5), [appointments, today]);
 
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
   return (
     <div className="p-8">
-      <header className="mb-8">
+      <header className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold text-[var(--foreground)]">
           Welcome Back, {displayName}.
         </h1>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setCalendarOpen(true)}
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--card-border)] bg-[var(--card)] px-4 py-2 text-sm font-medium text-[var(--foreground)] shadow-soft hover:bg-[var(--sidebar-hover)] focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            title="Open calendar"
+            aria-label="Open calendar"
+          >
+            <svg className="h-4 w-4 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span>{formatDateChip(today)}</span>
+          </button>
+
+          <div
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--card-border)] bg-[var(--card)] px-4 py-2 text-sm font-medium text-[var(--foreground)] shadow-soft"
+            aria-label="Current time"
+            title="Current time"
+          >
+            <svg className="h-4 w-4 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{formatTimeChip(now)}</span>
+          </div>
+        </div>
       </header>
+
+      <Dialog open={calendarOpen} onClose={() => setCalendarOpen(false)} title="Calendar" cancelLabel="Close">
+        <div className="space-y-4">
+          <p className="text-sm text-[var(--foreground)] opacity-80">
+            Current date (view only).
+          </p>
+          <div>
+            <label className={dialogLabelClass}>Date</label>
+            <input
+              type="date"
+              value={today}
+              readOnly
+              className={dialogInputClass}
+            />
+          </div>
+        </div>
+      </Dialog>
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard

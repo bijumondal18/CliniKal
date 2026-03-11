@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useTheme, type ThemeMode } from "@/contexts/ThemeContext";
 import { useSettings, type WorkingHoursDay } from "@/contexts/SettingsContext";
 import { useClinicData } from "@/contexts/ClinicDataContext";
@@ -21,13 +20,8 @@ const labelClass = "mb-1.5 block text-sm font-medium text-[var(--foreground)] op
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
-  const { settings, setNotifications, setWorkingHours, setClinicAddress, setMaxPatientsForDoctor } = useSettings();
+  const { settings, setNotifications, setWorkingHours, setMaxPatientsForDoctor } = useSettings();
   const { doctors } = useClinicData();
-  const [addressDraft, setAddressDraft] = useState(settings.clinicAddress);
-
-  useEffect(() => {
-    setAddressDraft(settings.clinicAddress);
-  }, [settings.clinicAddress]);
 
   return (
     <div className="p-8">
@@ -134,29 +128,6 @@ export default function SettingsPage() {
                 </div>
               );
             })}
-          </div>
-        </section>
-
-        {/* Clinic address */}
-        <section className="rounded-2xl border border-[var(--card-border)] bg-[var(--card)] p-6 shadow-soft">
-          <h2 className="text-lg font-semibold text-[var(--foreground)]">Clinic address</h2>
-          <p className="mt-1 text-sm text-[var(--foreground)] opacity-70">Edit your clinic address.</p>
-          <textarea
-            value={addressDraft}
-            onChange={(e) => setAddressDraft(e.target.value)}
-            className={`${inputClass} mt-4 min-h-[100px] resize-y`}
-            placeholder="Street, city, state, ZIP"
-            rows={3}
-          />
-          <div className="mt-4 flex justify-end">
-            <button
-              type="button"
-              onClick={() => setClinicAddress(addressDraft)}
-              disabled={!addressDraft.trim()}
-              className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-soft hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Save
-            </button>
           </div>
         </section>
 

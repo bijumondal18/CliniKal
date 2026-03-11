@@ -9,14 +9,14 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClinicDataProvider>
-      <SettingsProvider>
-        <ClinicProvider>
+    <ClinicProvider>
+      <ClinicDataProvider>
+        <SettingsProvider>
           <DashboardShell>
             {children}
           </DashboardShell>
-        </ClinicProvider>
-      </SettingsProvider>
-    </ClinicDataProvider>
+        </SettingsProvider>
+      </ClinicDataProvider>
+    </ClinicProvider>
   );
 }

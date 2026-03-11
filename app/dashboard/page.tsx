@@ -77,10 +77,10 @@ const statusColors: Record<string, string> = {
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { clinic } = useClinic();
+  const { currentClinic } = useClinic();
   const { appointments, patients } = useClinicData();
-  const displayName = clinic?.clinicName?.trim()
-    ? clinic.clinicName.trim().replace(/^./, (c) => c.toUpperCase())
+  const displayName = currentClinic?.clinicName?.trim()
+    ? currentClinic.clinicName.trim().replace(/^./, (c) => c.toUpperCase())
     : ((user?.displayName ?? (user?.email ? user.email.split("@")[0] : "")) || "there").replace(/^./, (c) => c.toUpperCase());
   const today = getTodayString();
   const todayAppointments = useMemo(() => appointments.filter((a) => a.date === today), [appointments, today]);

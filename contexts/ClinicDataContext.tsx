@@ -14,6 +14,7 @@ import {
 } from "firebase/firestore";
 import { getFirebaseDb, COLLECTIONS } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
+import { useClinic } from "@/contexts/ClinicContext";
 import { stripUndefined } from "@/lib/firestore-utils";
 import type { Patient } from "@/types/patient";
 import type { Doctor } from "@/types/doctor";
@@ -62,6 +63,7 @@ const ClinicDataContext = createContext<ClinicDataContextType | null>(null);
 export function ClinicDataProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const userId = user?.uid ?? null;
+  const { currentClinicId } = useClinic();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -74,7 +76,7 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
   const db = getFirebaseDb();
 
   useEffect(() => {
-    if (!db || !userId) {
+    if (!db || !userId || !currentClinicId) {
       setPatients([]);
       setDoctors([]);
       setAppointments([]);
@@ -90,8 +92,7 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
     const unsubs: (() => void)[] = [];
 
     const qPatients = query(
-      collection(db, COLLECTIONS.PATIENTS),
-      where("userId", "==", userId)
+      collection(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.PATIENTS)
     );
     unsubs.push(
       onSnapshot(qPatients, (snap) => {
@@ -101,8 +102,7 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
     );
 
     const qDoctors = query(
-      collection(db, COLLECTIONS.DOCTORS),
-      where("userId", "==", userId)
+      collection(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.DOCTORS)
     );
     unsubs.push(
       onSnapshot(qDoctors, (snap) => {
@@ -112,8 +112,7 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
     );
 
     const qAppointments = query(
-      collection(db, COLLECTIONS.APPOINTMENTS),
-      where("userId", "==", userId)
+      collection(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.APPOINTMENTS)
     );
     unsubs.push(
       onSnapshot(qAppointments, (snap) => {
@@ -123,8 +122,7 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
     );
 
     const qStaff = query(
-      collection(db, COLLECTIONS.STAFF),
-      where("userId", "==", userId)
+      collection(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.STAFF)
     );
     unsubs.push(
       onSnapshot(qStaff, (snap) => {
@@ -134,8 +132,7 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
     );
 
     const qMessages = query(
-      collection(db, COLLECTIONS.MESSAGES),
-      where("userId", "==", userId)
+      collection(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.MESSAGES)
     );
     unsubs.push(
       onSnapshot(qMessages, (snap) => {
@@ -163,8 +160,7 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
     );
 
     const qPrescriptions = query(
-      collection(db, COLLECTIONS.PRESCRIPTIONS),
-      where("userId", "==", userId)
+      collection(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.PRESCRIPTIONS)
     );
     unsubs.push(
       onSnapshot(qPrescriptions, (snap) => {
@@ -190,8 +186,7 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
     );
 
     const qReports = query(
-      collection(db, COLLECTIONS.REPORTS),
-      where("userId", "==", userId)
+      collection(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.REPORTS)
     );
     unsubs.push(
       onSnapshot(qReports, (snap) => {
@@ -222,14 +217,14 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
     return () => {
       unsubs.forEach((u) => u());
     };
-  }, [db, userId]);
+  }, [db, userId, currentClinicId]);
 
   const addPatient = useCallback(
     async (p: Patient) => {
       if (!db) {
         throw new Error("Firestore is not configured. Check your .env.local and restart the dev server.");
       }
-      if (!userId) {
+      if (!userId || !currentClinicId) {
         throw new Error("You must be signed in to add a patient.");
       }
       const docId = p.id;
@@ -248,29 +243,33 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
       if (p.lastVisit != null && p.lastVisit !== "") patientDoc.lastVisit = p.lastVisit;
       if (p.notes != null && p.notes !== "") patientDoc.notes = p.notes;
       try {
-        await setDoc(doc(db, COLLECTIONS.PATIENTS, docId), patientDoc);
+        await setDoc(doc(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.PATIENTS, docId), patientDoc);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         throw new Error(`Failed to add patient to Firestore: ${message}`);
       }
     },
-    [db, userId]
+    [db, userId, currentClinicId]
   );
 
   const updatePatient = useCallback(
     async (id: string, p: Omit<Patient, "id">) => {
-      if (!db || !userId) return;
-      await setDoc(doc(db, COLLECTIONS.PATIENTS, id), stripUndefined({ ...p, userId }), { merge: true });
+      if (!db || !userId || !currentClinicId) return;
+      await setDoc(
+        doc(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.PATIENTS, id),
+        stripUndefined({ ...p, userId }),
+        { merge: true }
+      );
     },
-    [db, userId]
+    [db, userId, currentClinicId]
   );
 
   const removePatient = useCallback(
     async (id: string) => {
-      if (!db) return;
-      await deleteDoc(doc(db, COLLECTIONS.PATIENTS, id));
+      if (!db || !currentClinicId) return;
+      await deleteDoc(doc(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.PATIENTS, id));
     },
-    [db]
+    [db, currentClinicId]
   );
 
   const addDoctor = useCallback(
@@ -278,7 +277,7 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
       if (!db) {
         throw new Error("Firestore is not configured. Check your .env.local and restart the dev server.");
       }
-      if (!userId) {
+      if (!userId || !currentClinicId) {
         throw new Error("You must be signed in to add a doctor.");
       }
       const docId = d.id;
@@ -297,29 +296,33 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
       if (d.bio != null && d.bio !== "") doctorDoc.bio = d.bio;
       if (d.profilePhoto != null && d.profilePhoto !== "") doctorDoc.profilePhoto = d.profilePhoto;
       try {
-        await setDoc(doc(db, COLLECTIONS.DOCTORS, docId), doctorDoc);
+        await setDoc(doc(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.DOCTORS, docId), doctorDoc);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         throw new Error(`Failed to add doctor to Firestore: ${message}`);
       }
     },
-    [db, userId]
+    [db, userId, currentClinicId]
   );
 
   const updateDoctor = useCallback(
     async (id: string, d: Omit<Doctor, "id">) => {
-      if (!db || !userId) return;
-      await setDoc(doc(db, COLLECTIONS.DOCTORS, id), stripUndefined({ ...d, userId }), { merge: true });
+      if (!db || !userId || !currentClinicId) return;
+      await setDoc(
+        doc(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.DOCTORS, id),
+        stripUndefined({ ...d, userId }),
+        { merge: true }
+      );
     },
-    [db, userId]
+    [db, userId, currentClinicId]
   );
 
   const removeDoctor = useCallback(
     async (id: string) => {
-      if (!db) return;
-      await deleteDoc(doc(db, COLLECTIONS.DOCTORS, id));
+      if (!db || !currentClinicId) return;
+      await deleteDoc(doc(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.DOCTORS, id));
     },
-    [db]
+    [db, currentClinicId]
   );
 
   const addAppointment = useCallback(
@@ -327,7 +330,7 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
       if (!db) {
         throw new Error("Firestore is not configured. Check your .env.local and restart the dev server.");
       }
-      if (!userId) {
+      if (!userId || !currentClinicId) {
         throw new Error("You must be signed in to add an appointment.");
       }
       const docId = a.id;
@@ -344,21 +347,25 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
       if (a.doctorId != null && a.doctorId !== "") appointmentDoc.doctorId = a.doctorId;
       if (a.notes != null && a.notes !== "") appointmentDoc.notes = a.notes;
       try {
-        await setDoc(doc(db, COLLECTIONS.APPOINTMENTS, docId), appointmentDoc);
+        await setDoc(doc(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.APPOINTMENTS, docId), appointmentDoc);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         throw new Error(`Failed to add appointment to Firestore: ${message}`);
       }
     },
-    [db, userId]
+    [db, userId, currentClinicId]
   );
 
   const updateAppointment = useCallback(
     async (id: string, a: Omit<Appointment, "id">) => {
-      if (!db || !userId) return;
-      await setDoc(doc(db, COLLECTIONS.APPOINTMENTS, id), stripUndefined({ ...a, userId }), { merge: true });
+      if (!db || !userId || !currentClinicId) return;
+      await setDoc(
+        doc(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.APPOINTMENTS, id),
+        stripUndefined({ ...a, userId }),
+        { merge: true }
+      );
     },
-    [db, userId]
+    [db, userId, currentClinicId]
   );
 
   const addStaff = useCallback(
@@ -366,7 +373,7 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
       if (!db) {
         throw new Error("Firestore is not configured. Check your .env.local and restart the dev server.");
       }
-      if (!userId) {
+      if (!userId || !currentClinicId) {
         throw new Error("You must be signed in to add staff.");
       }
       const docId = s.id;
@@ -381,29 +388,33 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
       if (s.department != null && s.department !== "") staffDoc.department = s.department;
       if (s.notes != null && s.notes !== "") staffDoc.notes = s.notes;
       try {
-        await setDoc(doc(db, COLLECTIONS.STAFF, docId), staffDoc);
+        await setDoc(doc(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.STAFF, docId), staffDoc);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         throw new Error(`Failed to add staff to Firestore: ${message}`);
       }
     },
-    [db, userId]
+    [db, userId, currentClinicId]
   );
 
   const updateStaff = useCallback(
     async (id: string, s: Omit<Staff, "id">) => {
-      if (!db || !userId) return;
-      await setDoc(doc(db, COLLECTIONS.STAFF, id), stripUndefined({ ...s, userId }), { merge: true });
+      if (!db || !userId || !currentClinicId) return;
+      await setDoc(
+        doc(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.STAFF, id),
+        stripUndefined({ ...s, userId }),
+        { merge: true }
+      );
     },
-    [db, userId]
+    [db, userId, currentClinicId]
   );
 
   const removeStaff = useCallback(
     async (id: string) => {
-      if (!db) return;
-      await deleteDoc(doc(db, COLLECTIONS.STAFF, id));
+      if (!db || !currentClinicId) return;
+      await deleteDoc(doc(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.STAFF, id));
     },
-    [db]
+    [db, currentClinicId]
   );
 
   const addMessage = useCallback(
@@ -411,12 +422,12 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
       if (!db) {
         throw new Error("Firestore is not configured. Check your .env.local and restart the dev server.");
       }
-      if (!userId) {
+      if (!userId || !currentClinicId) {
         throw new Error("You must be signed in to send a message.");
       }
       const sentBy = m.sentBy ?? "clinic";
       try {
-        await addDoc(collection(db, COLLECTIONS.MESSAGES), {
+        await addDoc(collection(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.MESSAGES), {
           userId,
           sentBy,
           recipientType: m.recipientType,
@@ -433,13 +444,13 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
         throw new Error(`Failed to send message: ${message}`);
       }
     },
-    [db, userId]
+    [db, userId, currentClinicId]
   );
 
   const updateMessage = useCallback(
     async (id: string, m: Partial<Omit<ClinicMessage, "id" | "userId" | "createdAt">>) => {
-      if (!db || !userId) return;
-      const docRef = doc(db, COLLECTIONS.MESSAGES, id);
+      if (!db || !userId || !currentClinicId) return;
+      const docRef = doc(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.MESSAGES, id);
       const update: Record<string, unknown> = {};
       if (m.recipientType != null) update.recipientType = m.recipientType;
       if (m.recipientId != null) update.recipientId = m.recipientId;
@@ -451,20 +462,20 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
       if (typeof m.sendViaEmail === "boolean") update.sendViaEmail = m.sendViaEmail;
       await setDoc(docRef, update, { merge: true });
     },
-    [db, userId]
+    [db, userId, currentClinicId]
   );
 
   const removeMessage = useCallback(
     async (id: string) => {
-      if (!db) return;
-      await deleteDoc(doc(db, COLLECTIONS.MESSAGES, id));
+      if (!db || !currentClinicId) return;
+      await deleteDoc(doc(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.MESSAGES, id));
     },
-    [db]
+    [db, currentClinicId]
   );
 
   const addPrescription = useCallback(
     async (p: Prescription) => {
-      if (!db || !userId) throw new Error("Not configured or not signed in.");
+      if (!db || !userId || !currentClinicId) throw new Error("Not configured or not signed in.");
       const docId = p.id;
       const medications = Array.isArray(p.medications) ? p.medications : [];
       const docData: Record<string, unknown> = {
@@ -479,35 +490,35 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
       if (p.diagnosis != null && p.diagnosis !== "") docData.diagnosis = p.diagnosis;
       if (p.notes != null && p.notes !== "") docData.notes = p.notes;
       if (p.followUp != null && p.followUp !== "") docData.followUp = p.followUp;
-      await setDoc(doc(db, COLLECTIONS.PRESCRIPTIONS, docId), docData);
+      await setDoc(doc(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.PRESCRIPTIONS, docId), docData);
     },
-    [db, userId]
+    [db, userId, currentClinicId]
   );
 
   const updatePrescription = useCallback(
     async (id: string, p: Omit<Prescription, "id">) => {
-      if (!db || !userId) return;
+      if (!db || !userId || !currentClinicId) return;
       const medications = Array.isArray(p.medications) ? p.medications : [];
       await setDoc(
-        doc(db, COLLECTIONS.PRESCRIPTIONS, id),
+        doc(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.PRESCRIPTIONS, id),
         stripUndefined({ ...p, userId, medications }),
         { merge: true }
       );
     },
-    [db, userId]
+    [db, userId, currentClinicId]
   );
 
   const removePrescription = useCallback(
     async (id: string) => {
-      if (!db) return;
-      await deleteDoc(doc(db, COLLECTIONS.PRESCRIPTIONS, id));
+      if (!db || !currentClinicId) return;
+      await deleteDoc(doc(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.PRESCRIPTIONS, id));
     },
-    [db]
+    [db, currentClinicId]
   );
 
   const addReport = useCallback(
     async (r: Report) => {
-      if (!db || !userId) throw new Error("Not configured or not signed in.");
+      if (!db || !userId || !currentClinicId) throw new Error("Not configured or not signed in.");
       const docId = r.id;
       const docData: Record<string, unknown> = {
         userId,
@@ -523,25 +534,29 @@ export function ClinicDataProvider({ children }: { children: React.ReactNode }) 
       if (r.summary != null && r.summary !== "") docData.summary = r.summary;
       if (r.findings != null && r.findings !== "") docData.findings = r.findings;
       if (r.fileUrl != null && r.fileUrl !== "") docData.fileUrl = r.fileUrl;
-      await setDoc(doc(db, COLLECTIONS.REPORTS, docId), docData);
+      await setDoc(doc(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.REPORTS, docId), docData);
     },
-    [db, userId]
+    [db, userId, currentClinicId]
   );
 
   const updateReport = useCallback(
     async (id: string, r: Omit<Report, "id">) => {
-      if (!db || !userId) return;
-      await setDoc(doc(db, COLLECTIONS.REPORTS, id), stripUndefined({ ...r, userId }), { merge: true });
+      if (!db || !userId || !currentClinicId) return;
+      await setDoc(
+        doc(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.REPORTS, id),
+        stripUndefined({ ...r, userId }),
+        { merge: true }
+      );
     },
-    [db, userId]
+    [db, userId, currentClinicId]
   );
 
   const removeReport = useCallback(
     async (id: string) => {
-      if (!db) return;
-      await deleteDoc(doc(db, COLLECTIONS.REPORTS, id));
+      if (!db || !currentClinicId) return;
+      await deleteDoc(doc(db, COLLECTIONS.CLINICS, currentClinicId, COLLECTIONS.REPORTS, id));
     },
-    [db]
+    [db, currentClinicId]
   );
 
   const value: ClinicDataContextType = {

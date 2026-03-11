@@ -47,7 +47,7 @@ export function TopBar() {
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const [notificationDialogOpen, setNotificationDialogOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>(initialNotifications);
-  const { clinic, saveClinic } = useClinic();
+  const { currentClinic, saveClinic } = useClinic();
   const [profileForm, setProfileForm] = useState({ clinicName: "", clinicAddress: "", clinicImage: "" });
   const profileRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
@@ -73,12 +73,12 @@ export function TopBar() {
   useEffect(() => {
     if (profileDialogOpen) {
       setProfileForm({
-        clinicName: clinic?.clinicName ?? "",
-        clinicAddress: clinic?.clinicAddress ?? "",
-        clinicImage: clinic?.clinicImage ?? "",
+        clinicName: currentClinic?.clinicName ?? "",
+        clinicAddress: currentClinic?.clinicAddress ?? "",
+        clinicImage: currentClinic?.clinicImage ?? "",
       });
     }
-  }, [profileDialogOpen, clinic?.clinicName, clinic?.clinicAddress, clinic?.clinicImage]);
+  }, [profileDialogOpen, currentClinic?.clinicName, currentClinic?.clinicAddress, currentClinic?.clinicImage]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -257,9 +257,9 @@ export function TopBar() {
             aria-expanded={profileOpen}
             aria-haspopup="true"
           >
-            {clinic?.clinicImage ? (
+            {currentClinic?.clinicImage ? (
               <img
-                src={clinic.clinicImage}
+                src={currentClinic.clinicImage}
                 alt="Clinic"
                 className="h-9 w-9 rounded-full object-cover border-2 border-[var(--card-border)]"
               />

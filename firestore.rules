@@ -5,50 +5,70 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    match /patients/{docId} {
-      allow read, write: if isSignedIn() && (
-        (resource == null && request.resource.data.userId == request.auth.uid) ||
-        (resource != null && resource.data.userId == request.auth.uid)
-      );
+    function clinicUserPath(clinicId) {
+      return /databases/$(database)/documents/clinics/$(clinicId)/users/$(request.auth.uid);
     }
-    match /doctors/{docId} {
-      allow read, write: if isSignedIn() && (
-        (resource == null && request.resource.data.userId == request.auth.uid) ||
-        (resource != null && resource.data.userId == request.auth.uid)
-      );
+
+    function clinicPath(clinicId) {
+      return /databases/$(database)/documents/clinics/$(clinicId);
     }
-    match /appointments/{docId} {
-      allow read, write: if isSignedIn() && (
-        (resource == null && request.resource.data.userId == request.auth.uid) ||
-        (resource != null && resource.data.userId == request.auth.uid)
-      );
+
+    function isClinicMember(clinicId) {
+      return isSignedIn() && exists(clinicUserPath(clinicId));
     }
-    match /staffs/{docId} {
-      allow read, write: if isSignedIn() && (
-        (resource == null && request.resource.data.userId == request.auth.uid) ||
-        (resource != null && resource.data.userId == request.auth.uid)
-      );
+
+    function isClinicAdmin(clinicId) {
+      return isClinicMember(clinicId) && get(clinicUserPath(clinicId)).data.role == "admin";
     }
-    match /clinics/{docId} {
-      allow read, write: if isSignedIn() && docId == request.auth.uid;
+
+    // The user who created a clinic can bootstrap their own membership doc
+    // before they're considered a member/admin.
+    function isClinicCreator(clinicId) {
+      return isSignedIn()
+        && exists(clinicPath(clinicId))
+        && get(clinicPath(clinicId)).data.createdByUserId == request.auth.uid;
     }
-    match /messages/{docId} {
-      allow read, write: if isSignedIn() && (
-        (resource == null && request.resource.data.userId == request.auth.uid) ||
-        (resource != null && resource.data.userId == request.auth.uid)
-      );
+
+    // A signed-in user can always read their own clinic memberships for clinic switching.
+    match /users/{userId}/clinics/{clinicId} {
+      allow read, write: if isSignedIn() && userId == request.auth.uid;
     }
-    match /prescriptions/{docId} {
-      allow read, write: if isSignedIn() && (
-        (resource == null && request.resource.data.userId == request.auth.uid) ||
-        (resource != null && resource.data.userId == request.auth.uid)
-      );
-    }
-    match /reports/{docId} {
-      allow read, write: if isSignedIn() && (
-        (resource == null && request.resource.data.userId == request.auth.uid) ||
-        (resource != null && resource.data.userId == request.auth.uid)
-      );
+
+    // Clinics are multi-tenant. Access is controlled by membership under clinics/{clinicId}/users/{uid}.
+    match /clinics/{clinicId} {
+      allow read: if isClinicMember(clinicId);
+      allow create: if isSignedIn() && request.resource.data.createdByUserId == request.auth.uid;
+      allow update, delete: if isClinicAdmin(clinicId);
+
+      match /users/{userId} {
+        allow read: if isClinicMember(clinicId);
+        // Admins can manage users. Additionally, the clinic creator can create
+        // their own membership doc to complete initial setup.
+        allow create: if (isClinicAdmin(clinicId)) || (userId == request.auth.uid && isClinicCreator(clinicId));
+        allow update, delete: if isClinicAdmin(clinicId);
+      }
+
+      match /patients/{docId} {
+        allow read, write: if isClinicMember(clinicId);
+      }
+      match /doctors/{docId} {
+        allow read, write: if isClinicMember(clinicId);
+      }
+      match /appointments/{docId} {
+        allow read, write: if isClinicMember(clinicId);
+      }
+      match /staffs/{docId} {
+        allow read, write: if isClinicMember(clinicId);
+      }
+      match /messages/{docId} {
+        allow read, write: if isClinicMember(clinicId);
+      }
+      match /prescriptions/{docId} {
+        allow read, write: if isClinicMember(clinicId);
+      }
+      match /reports/{docId} {
+        allow read, write: if isClinicMember(clinicId);
+      }
     }
   }
 }

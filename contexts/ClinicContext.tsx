@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, useEffect } from "react";
-import { doc, onSnapshot, setDoc } from "firebase/firestore";
+import { collection, doc, onSnapshot, setDoc } from "firebase/firestore";
 import { getFirebaseDb, COLLECTIONS } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -11,82 +11,174 @@ export type ClinicProfile = {
   clinicImage: string;
 };
 
-type ClinicContextType = {
-  clinic: ClinicProfile | null;
-  isClinicLoading: boolean;
-  saveClinic: (data: ClinicProfile) => Promise<void>;
+export type ClinicSummary = {
+  id: string;
+  role: "admin" | "member";
+  clinicName: string;
+  clinicAddress: string;
+  clinicImage: string;
 };
 
-const defaultClinic: ClinicProfile = {
-  clinicName: "",
-  clinicAddress: "",
-  clinicImage: "",
+type ClinicContextType = {
+  clinics: ClinicSummary[];
+  currentClinicId: string | null;
+  currentClinic: ClinicSummary | null;
+  isClinicLoading: boolean;
+  setCurrentClinicId: (clinicId: string) => void;
+  createClinic: (data: ClinicProfile) => Promise<string>;
+  saveClinic: (data: ClinicProfile) => Promise<void>;
 };
 
 const ClinicContext = createContext<ClinicContextType | null>(null);
 
+const STORAGE_KEY = "current-clinic-id";
+
 export function ClinicProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const userId = user?.uid ?? null;
-  const [clinic, setClinic] = useState<ClinicProfile | null>(null);
+  const [clinics, setClinics] = useState<ClinicSummary[]>([]);
+  const [currentClinicId, _setCurrentClinicId] = useState<string | null>(null);
   const [isClinicLoading, setIsClinicLoading] = useState(true);
   const db = getFirebaseDb();
 
   useEffect(() => {
     if (!db || !userId) {
-      setClinic(null);
+      setClinics([]);
+      _setCurrentClinicId(null);
       setIsClinicLoading(false);
       return;
     }
+
     setIsClinicLoading(true);
-    const docRef = doc(db, COLLECTIONS.CLINICS, userId);
+    const membershipRef = collection(db, "users", userId, "clinics");
     const unsub = onSnapshot(
-      docRef,
-      (snap) => {
-        if (snap.exists()) {
-          const d = snap.data();
-          setClinic({
-            clinicName: (d.clinicName as string) ?? "",
-            clinicAddress: (d.clinicAddress as string) ?? "",
-            clinicImage: (d.clinicImage as string) ?? "",
+      membershipRef,
+      async (snap) => {
+        const nextClinics: ClinicSummary[] = snap.docs.map((d) => {
+          const data = d.data();
+          return {
+            id: d.id,
+            role: (data.role as ClinicSummary["role"]) ?? "member",
+            clinicName: (data.clinicName as string) ?? "",
+            clinicAddress: (data.clinicAddress as string) ?? "",
+            clinicImage: (data.clinicImage as string) ?? "",
+          };
+        });
+
+        if (nextClinics.length === 0) {
+          // First-time user: auto-create a clinic and make them admin.
+          const clinicRef = doc(collection(db, COLLECTIONS.CLINICS));
+          const clinicId = clinicRef.id;
+          const defaultProfile: ClinicProfile = { clinicName: "My Clinic", clinicAddress: "", clinicImage: "" };
+          await setDoc(clinicRef, {
+            clinicName: defaultProfile.clinicName,
+            clinicAddress: defaultProfile.clinicAddress,
+            clinicImage: defaultProfile.clinicImage,
+            createdAt: new Date().toISOString(),
+            createdByUserId: userId,
           });
-        } else {
-          setClinic(null);
+          await setDoc(doc(db, COLLECTIONS.CLINICS, clinicId, "users", userId), {
+            role: "admin",
+            joinedAt: new Date().toISOString(),
+          });
+          await setDoc(doc(db, "users", userId, "clinics", clinicId), {
+            role: "admin",
+            clinicName: defaultProfile.clinicName,
+            clinicAddress: defaultProfile.clinicAddress,
+            clinicImage: defaultProfile.clinicImage,
+            updatedAt: new Date().toISOString(),
+          });
+          // Snapshot will re-fire with the new membership.
+          return;
         }
+
+        setClinics(nextClinics);
+
+        const stored = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+        const preferred = stored && nextClinics.some((c) => c.id === stored) ? stored : nextClinics[0].id;
+        _setCurrentClinicId((prev) => prev ?? preferred);
         setIsClinicLoading(false);
       },
       () => {
-        setClinic(null);
+        setClinics([]);
+        _setCurrentClinicId(null);
         setIsClinicLoading(false);
       }
     );
+
     return () => unsub();
   }, [db, userId]);
 
-  const saveClinic = useCallback(
-    async (data: ClinicProfile) => {
+  const setCurrentClinicId = useCallback((clinicId: string) => {
+    _setCurrentClinicId(clinicId);
+    if (typeof window !== "undefined") localStorage.setItem(STORAGE_KEY, clinicId);
+  }, []);
+
+  const createClinic = useCallback(
+    async (data: ClinicProfile): Promise<string> => {
       if (!db || !userId) {
-        throw new Error("You must be signed in to save clinic details.");
+        throw new Error("You must be signed in to create a clinic.");
       }
-      const docRef = doc(db, COLLECTIONS.CLINICS, userId);
-      const payload = {
-        userId,
+      const clinicRef = doc(collection(db, COLLECTIONS.CLINICS));
+      const clinicId = clinicRef.id;
+      await setDoc(clinicRef, {
         clinicName: data.clinicName ?? "",
         clinicAddress: data.clinicAddress ?? "",
         clinicImage: data.clinicImage ?? "",
-      };
-      await setDoc(docRef, payload);
-      setClinic({
-        clinicName: payload.clinicName,
-        clinicAddress: payload.clinicAddress,
-        clinicImage: payload.clinicImage,
+        createdAt: new Date().toISOString(),
+        createdByUserId: userId,
       });
+      await setDoc(doc(db, COLLECTIONS.CLINICS, clinicId, "users", userId), {
+        role: "admin",
+        joinedAt: new Date().toISOString(),
+      });
+      await setDoc(doc(db, "users", userId, "clinics", clinicId), {
+        role: "admin",
+        clinicName: data.clinicName ?? "",
+        clinicAddress: data.clinicAddress ?? "",
+        clinicImage: data.clinicImage ?? "",
+        updatedAt: new Date().toISOString(),
+      });
+      setCurrentClinicId(clinicId);
+      return clinicId;
     },
-    [db, userId]
+    [db, userId, setCurrentClinicId]
   );
 
+  const saveClinic = useCallback(
+    async (data: ClinicProfile) => {
+      if (!db || !userId || !currentClinicId) {
+        throw new Error("You must be signed in to save clinic details.");
+      }
+      const payload = {
+        clinicName: data.clinicName ?? "",
+        clinicAddress: data.clinicAddress ?? "",
+        clinicImage: data.clinicImage ?? "",
+        updatedAt: new Date().toISOString(),
+      };
+      await setDoc(doc(db, COLLECTIONS.CLINICS, currentClinicId), payload, { merge: true });
+      await setDoc(doc(db, "users", userId, "clinics", currentClinicId), payload, { merge: true });
+      setClinics((prev) =>
+        prev.map((c) => (c.id === currentClinicId ? { ...c, ...payload } : c))
+      );
+    },
+    [db, userId, currentClinicId]
+  );
+
+  const currentClinic = currentClinicId ? clinics.find((c) => c.id === currentClinicId) ?? null : null;
+
   return (
-    <ClinicContext.Provider value={{ clinic, isClinicLoading, saveClinic }}>
+    <ClinicContext.Provider
+      value={{
+        clinics,
+        currentClinicId,
+        currentClinic,
+        isClinicLoading,
+        setCurrentClinicId,
+        createClinic,
+        saveClinic,
+      }}
+    >
       {children}
     </ClinicContext.Provider>
   );

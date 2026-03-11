@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useCallback, useEffect } from "rea
 import { collection, doc, onSnapshot, setDoc } from "firebase/firestore";
 import { getFirebaseDb, COLLECTIONS } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
+import { getTrialEndDate } from "@/types/membership";
 
 export type ClinicProfile = {
   clinicName: string;
@@ -76,6 +77,9 @@ export function ClinicProvider({ children }: { children: React.ReactNode }) {
             clinicImage: defaultProfile.clinicImage,
             createdAt: new Date().toISOString(),
             createdByUserId: userId,
+            membershipPlan: "trial",
+            membershipStatus: "trialing",
+            trialEndsAt: getTrialEndDate(),
           });
           await setDoc(doc(db, COLLECTIONS.CLINICS, clinicId, "users", userId), {
             role: "admin",
@@ -127,6 +131,9 @@ export function ClinicProvider({ children }: { children: React.ReactNode }) {
         clinicImage: data.clinicImage ?? "",
         createdAt: new Date().toISOString(),
         createdByUserId: userId,
+        membershipPlan: "trial",
+        membershipStatus: "trialing",
+        trialEndsAt: getTrialEndDate(),
       });
       await setDoc(doc(db, COLLECTIONS.CLINICS, clinicId, "users", userId), {
         role: "admin",

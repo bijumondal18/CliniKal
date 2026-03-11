@@ -3,6 +3,8 @@
 import { useTheme, type ThemeMode } from "@/contexts/ThemeContext";
 import { useSettings, type WorkingHoursDay } from "@/contexts/SettingsContext";
 import { useClinicData } from "@/contexts/ClinicDataContext";
+import { useMembership } from "@/contexts/MembershipContext";
+import { PLAN_LABELS, STATUS_LABELS } from "@/types/membership";
 
 const DAY_LABELS: Record<WorkingHoursDay, string> = {
   mon: "Monday",
@@ -22,6 +24,7 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const { settings, setNotifications, setWorkingHours, setMaxPatientsForDoctor } = useSettings();
   const { doctors } = useClinicData();
+  const { membership, isActive } = useMembership();
 
   return (
     <div className="py-4 sm:p-8">
@@ -33,6 +36,57 @@ export default function SettingsPage() {
       </header>
 
       <div className="space-y-8">
+        {/* Membership / Subscription */}
+        <section className="rounded-2xl border border-[var(--card-border)] bg-[var(--card)] p-6 shadow-soft">
+          <h2 className="text-lg font-semibold text-[var(--foreground)]">Membership</h2>
+          <p className="mt-1 text-sm text-[var(--foreground)] opacity-70">
+            Your clinic subscription. Upgrade or manage billing to continue using the service.
+          </p>
+          <div className="mt-4 flex flex-wrap items-center gap-4">
+            <div className="flex flex-wrap gap-3">
+              <div>
+                <p className="text-xs font-medium text-[var(--foreground)] opacity-70">Plan</p>
+                <p className="text-sm font-semibold text-[var(--foreground)]">
+                  {membership ? PLAN_LABELS[membership.planId] : "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-[var(--foreground)] opacity-70">Status</p>
+                <p className="text-sm font-semibold text-[var(--foreground)]">
+                  {membership ? STATUS_LABELS[membership.status] : "—"}
+                </p>
+              </div>
+              {membership?.trialEndsAt && (
+                <div>
+                  <p className="text-xs font-medium text-[var(--foreground)] opacity-70">Trial ends</p>
+                  <p className="text-sm font-semibold text-[var(--foreground)]">
+                    {new Date(membership.trialEndsAt).toLocaleDateString(undefined, { dateStyle: "medium" })}
+                  </p>
+                </div>
+              )}
+            </div>
+            {!isActive && (
+              <p className="text-sm text-amber-600 dark:text-amber-400">
+                Your access has expired. Upgrade or renew to continue.
+              </p>
+            )}
+            <div className="flex flex-wrap gap-3">
+              <a
+                href="/dashboard/settings/upgrade"
+                className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white shadow-soft hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                Upgrade plan
+              </a>
+              <a
+                href="/dashboard/settings/billing"
+                className="rounded-xl border border-[var(--card-border)] bg-[var(--muted-bg)] px-4 py-2.5 text-sm font-medium text-[var(--foreground)] shadow-soft hover:bg-[var(--sidebar-hover)] focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              >
+                Manage billing
+              </a>
+            </div>
+          </div>
+        </section>
+
         {/* Theme */}
         <section className="rounded-2xl border border-[var(--card-border)] bg-[var(--card)] p-6 shadow-soft">
           <h2 className="text-lg font-semibold text-[var(--foreground)]">Appearance</h2>

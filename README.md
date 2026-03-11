@@ -38,6 +38,10 @@ firebase deploy --only firestore:rules
 
 After setting `.env.local`, run the dev server and sign in with the email/password you created in step 1.
 
+### 5. Deploy (make it live)
+
+See **[DEPLOY.md](./DEPLOY.md)** for step-by-step instructions to deploy on Vercel, add your Firebase authorized domain, and (optional) custom domain.
+
 ---
 
 ## Getting Started

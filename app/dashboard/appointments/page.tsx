@@ -79,7 +79,7 @@ export default function AppointmentsPage() {
     patientId: "",
     date: "",
     time: "",
-    type: "checkup" as const,
+    type: "checkup" as Appointment["type"],
     doctorId: "",
     notes: "",
     status: "scheduled" as Appointment["status"],

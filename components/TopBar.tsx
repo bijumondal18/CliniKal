@@ -187,7 +187,7 @@ export function TopBar() {
           key: `prescription:${pr.id}`,
           type: "Prescription",
           title,
-          subtitle: [pr.doctorName, pr.createdAt].filter(Boolean).join(" • ") || undefined,
+          subtitle: [pr.doctorName, pr.date].filter(Boolean).join(" • ") || undefined,
           href: "/dashboard/prescriptions",
         });
       }
@@ -195,13 +195,13 @@ export function TopBar() {
 
     for (const r of reports) {
       const title = r.patientName ? `Report • ${r.patientName}` : "Report";
-      const blob = [r.patientName ?? "", r.doctorName ?? "", r.reportType ?? "", r.summary ?? "", r.createdAt ?? ""].join(" ");
+      const blob = [r.patientName ?? "", r.doctorName ?? "", r.type ?? "", r.summary ?? "", r.date ?? ""].join(" ");
       if (match(blob)) {
         results.push({
           key: `report:${r.id}`,
           type: "Report",
           title,
-          subtitle: [r.reportType, r.createdAt].filter(Boolean).join(" • ") || undefined,
+          subtitle: [r.type, r.date].filter(Boolean).join(" • ") || undefined,
           href: "/dashboard/reports",
         });
       }

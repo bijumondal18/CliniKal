@@ -48,6 +48,7 @@ export function TopBar() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const [notificationDialogOpen, setNotificationDialogOpen] = useState(false);
@@ -336,7 +337,18 @@ export function TopBar() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <div className="relative" ref={searchRef}>
+        <button
+          type="button"
+          onClick={() => setMobileSearchOpen(true)}
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--muted-bg)] text-[var(--foreground)] opacity-80 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:hidden"
+          title="Search"
+          aria-label="Search"
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </button>
+        <div className="relative hidden sm:block" ref={searchRef}>
           <div
             className={`flex items-center rounded-full bg-[var(--muted-bg)] transition-[width] duration-300 ease-out ${
               searchOpen ? "w-72" : "w-9"
@@ -698,6 +710,73 @@ export function TopBar() {
               <span className="truncate">{item.label}</span>
             </Link>
           ))}
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={mobileSearchOpen}
+        onClose={() => setMobileSearchOpen(false)}
+        title="Search"
+        cancelLabel="Close"
+      >
+        <div className="space-y-3">
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setMobileSearchOpen(false);
+              if (e.key === "Enter" && globalResults[0]) {
+                router.push(globalResults[0].href);
+                setMobileSearchOpen(false);
+              }
+            }}
+            autoFocus
+            className={dialogInputClass}
+            placeholder="Search patients, doctors, appointments..."
+            aria-label="Global search"
+          />
+          <div className="overflow-hidden rounded-2xl border border-[var(--card-border)] bg-[var(--card)]">
+            <div className="border-b border-[var(--card-border)] px-4 py-3">
+              <p className="text-sm font-semibold text-[var(--foreground)]">Search results</p>
+              <p className="text-xs text-[var(--foreground)] opacity-60">Patients, doctors, appointments, prescriptions, reports</p>
+            </div>
+            <div className="max-h-[min(60vh,18rem)] overflow-y-auto overscroll-contain p-2">
+              {searchQuery.trim() === "" ? (
+                <p className="px-4 py-8 text-center text-sm text-[var(--foreground)] opacity-70">Type to search.</p>
+              ) : globalResults.length === 0 ? (
+                <p className="px-4 py-8 text-center text-sm text-[var(--foreground)] opacity-70">No results.</p>
+              ) : (
+                <ul className="space-y-1">
+                  {globalResults.map((r) => (
+                    <li key={r.key}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          router.push(r.href);
+                          setMobileSearchOpen(false);
+                        }}
+                        className="flex w-full items-start gap-3 rounded-xl px-4 py-3 text-left transition-colors hover:bg-[var(--sidebar-hover)]"
+                      >
+                        <span className="mt-0.5 inline-flex shrink-0 rounded-full bg-[var(--muted-bg)] px-2 py-0.5 text-xs font-medium text-[var(--foreground)] opacity-80">
+                          {r.type}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-medium text-[var(--foreground)]">{r.title}</span>
+                          {r.subtitle && (
+                            <span className="mt-0.5 block truncate text-xs text-[var(--foreground)] opacity-70">
+                              {r.subtitle}
+                            </span>
+                          )}
+                        </span>
+                        <span className="shrink-0 text-xs text-blue-600">Open →</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
         </div>
       </Dialog>
 
